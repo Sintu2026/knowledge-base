@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
@@ -27,10 +28,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
-      </head>
       <body className="flex min-h-full flex-col">
+        {/* Runs before hydration so the theme applies without a flash. */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeInit}
+        </Script>
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

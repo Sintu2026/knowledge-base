@@ -11,6 +11,17 @@ Running notes that supplement the spec. Newest at the bottom.
   - *SOP* — the gate criteria: what must be true before proceeding.
   Keep both available in every section; the hint is what prevents misuse.
 
+## For step 11 (polish pass) — from step-3 review
+
+- **Add-tile prominence.** The dashed "Add a feature here" tile competes with
+  real content in single-feature modules. When a module row has fewer than
+  three entries, shrink it — narrower tile or a plain text link.
+- **Draft badge replaces tile meta.** Draft entries show the badge *instead
+  of* the skill count line. Show both so tiles stay uniform.
+- **Does difficulty earn its place?** Nearly every tile reads Beginner, which
+  is noise. Watch it; consider dropping difficulty from tiles (keep it in the
+  reader) if the distribution stays this flat.
+
 ## Decisions made in step 3
 
 - **Taxonomy archiving needs a flag the §5 data model lacks.** §8.5 requires
