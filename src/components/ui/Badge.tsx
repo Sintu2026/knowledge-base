@@ -4,13 +4,13 @@ import { cn } from "@/lib/cn";
 type Variant = "neutral" | "accent" | "warning";
 
 /*
- * Colour is never the only signal: neutral badges are outlined,
- * tinted badges (accent, warning) are filled with no border.
+ * Status as quiet text — no fill, no border. A badge annotates; it never
+ * competes with content.
  */
 const variants: Record<Variant, string> = {
-  neutral: "border border-hairline text-ink-muted",
-  accent: "border border-transparent bg-accent-tint text-accent",
-  warning: "border border-transparent bg-warning-tint text-warning",
+  neutral: "text-ink-faint",
+  accent: "text-accent",
+  warning: "text-warning",
 };
 
 type BadgeProps = ComponentProps<"span"> & {
@@ -21,7 +21,7 @@ export function Badge({ variant = "neutral", className, ...props }: BadgeProps) 
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-control px-1.5 text-xs",
+        "inline-flex items-center gap-1 whitespace-nowrap text-meta",
         variants[variant],
         className,
       )}

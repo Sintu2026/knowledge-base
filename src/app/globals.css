@@ -91,9 +91,9 @@
   --text-page-title--letter-spacing: -0.025em;
   --text-page-title--font-weight: 500;
 
-  --text-card-title: 1.1875rem; /* 19px */
-  --text-card-title--line-height: 1.35;
-  --text-card-title--letter-spacing: -0.02em;
+  --text-card-title: 1.0625rem; /* 17px — the page title owns the scale */
+  --text-card-title--line-height: 1.4;
+  --text-card-title--letter-spacing: -0.015em;
   --text-card-title--font-weight: 500;
 
   --text-section-head: 1.25rem; /* 20px */

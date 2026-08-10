@@ -154,7 +154,7 @@ export function SearchResults() {
             index++;
             return (
               <Link key={hit.href} href={hit.href} data-index={index} className={rowClass(index)}>
-                <span className="text-[1.0625rem] font-medium tracking-[-0.015em] text-ink">{hit.name}</span>
+                <span className="text-card-title text-ink">{hit.name}</span>
                 <span className="text-meta text-ink-faint">{hit.detail}</span>
               </Link>
             );
@@ -175,7 +175,7 @@ export function SearchResults() {
                 className={rowClass(index)}
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-[1.0625rem] font-medium tracking-[-0.015em] text-ink">{hit.title}</span>
+                  <span className="text-card-title text-ink">{hit.title}</span>
                   <Badge>{hit.template === "FEATURE" ? "Feature" : "Process"}</Badge>
                 </span>
                 <span className="text-meta text-ink-faint">{hit.breadcrumb}</span>
@@ -207,7 +207,7 @@ export function SearchResults() {
               <Link key={hit.id} href={href} data-index={index} className={rowClass(index)}>
                 <span className="flex items-center gap-2">
                   <Video size={16} aria-hidden className="shrink-0 text-ink-muted" />
-                  <span className="text-[1.0625rem] font-medium tracking-[-0.015em] text-ink">{hit.title}</span>
+                  <span className="text-card-title text-ink">{hit.title}</span>
                   {hit.durationSeconds !== null ? (
                     <span className="text-meta text-ink-faint">
                       {formatDuration(hit.durationSeconds)}

@@ -135,7 +135,7 @@ export default async function HomePage(props: PageProps<"/">) {
                   Nothing matches these filters.
                 </p>
               ) : (
-                <div className="mt-8 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-x-7 gap-y-8">
+                <div className="mt-8 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-x-7 gap-y-12">
                   {cards.map((entry) => (
                     <EntryCard key={entry.id} entry={entry} />
                   ))}

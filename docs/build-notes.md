@@ -13,16 +13,22 @@ chrome, Apple-adjacent. Structure was right; furniture was wrong.
   size utility bundles its weight and tracking):
   - `text-page-title` — 34px / 500 / -0.025em. Every page opens on a hero
     title with generous space; never straight into controls.
-  - `text-card-title` — 19px / 500 / -0.02em.
+  - `text-card-title` — 17px / 500 / -0.015em. The page title owns the
+    scale; card titles never compete with the hero.
   - `text-section-head` — 20px / 500 / -0.015em (subcategory headings).
   - body 14px; `text-meta` — 12px for metadata, in `ink-faint`.
 - **Borders are earned.** Only genuinely interactive containers keep them
   (inputs, secondary buttons, modals, bordered row lists). Entry cards and
   tiles are borderless content blocks — no background, no radius —
-  separated by whitespace: 32px vertical, 28px horizontal grid gaps.
-- **Section completeness = five bars**, 16×3px, 5px apart, rounded ends.
+  separated by whitespace: 48px vertical, 28px horizontal grid gaps —
+  vertical space is what stops a grid reading as a table.
+- **Section completeness = five bars**, 16×3px, 5px apart, rounded ends,
+  sitting 16px clear of the title so they read as a separate signal.
   Filled accent, empty `hairline-strong`. Status badges sit beside the bar
   row, never inside it. An sr-only summary carries the signal non-visually.
+- **Badges are muted text** — no fill, no outline (`text-meta`; Draft in
+  `ink-faint`, Review overdue in `warning`). A badge annotates; it never
+  competes with content.
 - **Filter chips are text links** — active is full-weight ink, no pill.
 - **Primary and danger actions are coloured text** — no fill, no border.
   Weight comes from colour and placement, not saturation.

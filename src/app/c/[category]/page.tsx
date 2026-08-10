@@ -121,7 +121,7 @@ export default async function CategoryPage(props: PageProps<"/c/[category]">) {
                   Nothing in {sub.name} matches the filters.
                 </p>
               ) : (
-                <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-7 gap-y-8">
+                <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-7 gap-y-12">
                   {visible.map((entry) => (
                     <EntryTile
                       key={entry.id}

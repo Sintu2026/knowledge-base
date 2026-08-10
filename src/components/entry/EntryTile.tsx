@@ -19,7 +19,7 @@ export function EntryTile({ href, title, meta, draft, overdue }: EntryTileProps)
       href={href}
       className="group flex flex-col gap-1.5 rounded-control transition-transform duration-150 ease-out hover:-translate-y-0.5"
     >
-      <span className="text-[1.0625rem] font-medium leading-snug tracking-[-0.015em] text-ink group-hover:text-accent">
+      <span className="text-card-title text-ink group-hover:text-accent">
         {title}
       </span>
       <span className="flex flex-wrap items-center gap-1.5 text-meta text-ink-faint">

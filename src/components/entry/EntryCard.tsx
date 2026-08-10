@@ -54,7 +54,9 @@ export function EntryCard({ entry }: { entry: EntryCardData }) {
       href={`/entry/${entry.id}`}
       className="group flex flex-col gap-2.5 rounded-control transition-transform duration-150 ease-out hover:-translate-y-0.5"
     >
-      <span className="flex items-center gap-2.5">
+      {/* mb pushes the bars 16px clear of the title so they read as a
+          separate signal, not part of the heading. */}
+      <span className="mb-1.5 flex items-center gap-2.5">
         <SectionBars filled={entry.filled} />
         {entry.draft ? <Badge>Draft</Badge> : null}
         {entry.overdue ? <Badge variant="warning">Review overdue</Badge> : null}
