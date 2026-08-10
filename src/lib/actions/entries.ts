@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth";
-import { canEdit } from "@/lib/access";
+import { canDeleteEntry, canEdit } from "@/lib/access";
 import { db } from "@/lib/db";
 import {
   assignmentRemoveSchema,
@@ -111,7 +111,7 @@ export async function publishEntry(input: unknown): Promise<EntryActionResult> {
     where: { id: parsed.data.id },
     include: { sections: { orderBy: { order: "asc" } } },
   });
-  if (!entry) return fail("This entry no longer exists.");
+  if (!entry || entry.deletedAt) return fail("This entry no longer exists.");
 
   // Publishing needs only a title, a destination, and a non-empty What.
   // Everything else can come later and shows as partial (§8.3).
@@ -141,6 +141,27 @@ export async function publishEntry(input: unknown): Promise<EntryActionResult> {
       },
     }),
   ]);
+  return { ok: true };
+}
+
+export async function deleteEntry(input: unknown): Promise<EntryActionResult> {
+  const user = await editor();
+  if (!user) return fail("Sign in to make changes.");
+  const parsed = entryIdSchema.safeParse(input);
+  if (!parsed.success) return fail("Refresh and try again.");
+
+  const entry = await db.entry.findUnique({ where: { id: parsed.data.id } });
+  if (!entry || entry.deletedAt) return fail("This entry no longer exists.");
+  if (!canDeleteEntry(user, entry)) {
+    return fail("Only the owner or an admin can delete this entry.");
+  }
+
+  // Soft delete: the row (and its sections, blocks, skills, revisions) stays
+  // for recovery; the search trigger drops its docs the moment this commits.
+  await db.entry.update({
+    where: { id: entry.id },
+    data: { deletedAt: new Date() },
+  });
   return { ok: true };
 }
 

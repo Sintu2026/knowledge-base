@@ -15,7 +15,9 @@ export default async function EntryPage(props: PageProps<"/entry/[id]">) {
     where: { id },
     include: { category: true, subcategory: true },
   });
-  if (!entry) notFound();
+  // Soft-deleted entries are gone from every reader's perspective; the row
+  // survives only for admin-level recovery.
+  if (!entry || entry.deletedAt) notFound();
 
   return (
     <PageShell user={user}>

@@ -115,6 +115,42 @@ choice, so a product with twenty modules stays a clean list.
   step 7 adds blocks; the reader's completeness logic already counts blocks
   and skills.
 
+## Soft delete + Claude assistance + blocks (after step 6)
+
+- **Delete is soft.** `Entry.deletedAt` — never row removal, so it stays
+  recoverable. The search refresh functions treat a set `deletedAt` exactly
+  like draft (docs removed, skill docs included), so deletion drops out of
+  search the moment it commits; every browse/count query filters
+  `deletedAt: null`. Clearing the column rebuilds docs instantly — restore
+  UI can ride along with step 10's history work; until then it's one
+  `UPDATE` away for an admin.
+- **Who deletes: owner or admin.** Admins are the emails in `ADMIN_EMAILS`
+  (.env) — no role system, and `src/lib/access.ts` stays the entire
+  permission model. The action is a quiet danger text link at the editor's
+  foot, behind a dialog naming the entry.
+- **Taxonomy admin counts still include soft-deleted entries** on purpose:
+  those rows genuinely block subcategory deletion (FK) and move with
+  archive flows, so hiding them from admin counts would lie to the person
+  doing the moving.
+- **Claude never drafts.** All four assist actions
+  (`src/lib/actions/assist.ts`, model `claude-opus-5`) operate on what the
+  author wrote: tighten a filled section, list a newcomer's open questions,
+  derive title+summary once What has content, distill search phrases and
+  let our own FTS find overlaps. Quiet meta-text actions; every suggestion
+  sits in a read-only pane until explicitly accepted; nothing writes
+  otherwise. Without `ANTHROPIC_API_KEY` the actions never render and the
+  editor is fully functional.
+- **Blocks (step 7 pulled forward).** Chip row — Video, Workflow, SOP,
+  Document, Link — under "Add to this section", only when a section is
+  open. Workflow/SOP carry the step-2 hint distinction on the chips
+  (tooltips) and as the open form's descriptor line. Existing blocks render
+  as compact rows (icon, title, muted meta, remove). Payload shapes are the
+  seed's, validated by the Zod discriminated union in
+  `src/lib/schemas/blocks.ts`. FILE stays a schema-level type with no chip
+  for now; SOP items are all `required: true` until the reader needs the
+  distinction. A section with blocks counts as content for the editor rail
+  and stays expanded.
+
 ## Decisions made in step 3
 
 - **Taxonomy archiving needs a flag the §5 data model lacks.** §8.5 requires

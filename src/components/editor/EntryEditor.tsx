@@ -29,6 +29,9 @@ import {
   updateEntryMeta,
   updateSectionBody,
 } from "@/lib/actions/entries";
+import { EntryAssist, TightenAssist } from "@/components/editor/Assist";
+import { SectionBlocks, type EditorBlock } from "@/components/editor/SectionBlocks";
+import { DeleteEntryAction } from "@/components/editor/DeleteEntryAction";
 
 type Kind = "WHAT" | "WHY" | "HOW" | "WHO" | "WHEN";
 type Template = "PROCESS" | "FEATURE";
@@ -44,13 +47,15 @@ export type EditorEntry = {
   owner: { name: string };
   tags: { id: string; label: string }[];
   assignments: { id: string; role: string; userId: string; userName: string }[];
-  sections: { id: string; kind: Kind; body: string }[];
+  sections: { id: string; kind: Kind; body: string; blocks: EditorBlock[] }[];
 };
 
 type EntryEditorProps = {
   entry: EditorEntry;
   destinations: ComboboxOption[];
   users: { id: string; name: string }[];
+  canDelete: boolean;
+  assistAvailable: boolean;
 };
 
 type SaveState = "idle" | "dirty" | "saving" | "saved";
@@ -65,7 +70,13 @@ const CADENCES = [
   ["365", "Review yearly"],
 ] as const;
 
-export function EntryEditor({ entry, destinations, users }: EntryEditorProps) {
+export function EntryEditor({
+  entry,
+  destinations,
+  users,
+  canDelete,
+  assistAvailable,
+}: EntryEditorProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -153,6 +164,37 @@ export function EntryEditor({ entry, destinations, users }: EntryEditorProps) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [flush, publish]);
+
+  // Section text changes — from typing or from an accepted rewrite — all
+  // route through here: state, the flush mirror, then the autosave timer.
+  const updateBody = useCallback(
+    (sectionId: string, body: string) => {
+      setBodies((prev) => ({ ...prev, [sectionId]: body }));
+      latest.current = {
+        ...latest.current,
+        bodies: { ...latest.current.bodies, [sectionId]: body },
+      };
+      scheduleSave();
+    },
+    [scheduleSave],
+  );
+
+  // Accepting Claude's title/summary suggestion is a normal edit.
+  const acceptTitleSummary = useCallback(
+    (nextTitle: string, nextSummary: string) => {
+      setTitle(nextTitle);
+      setSummary(nextSummary);
+      latest.current = { ...latest.current, title: nextTitle, summary: nextSummary };
+      scheduleSave();
+    },
+    [scheduleSave],
+  );
+
+  const whatSectionId = entry.sections.find((s) => s.kind === "WHAT")?.id;
+  const whatFilled = Boolean(
+    whatSectionId && (bodies[whatSectionId] ?? "").trim() !== "",
+  );
+  const anyFilled = entry.sections.some((s) => (bodies[s.id] ?? "").trim() !== "");
 
   const saveLabel =
     saveState === "saving"
@@ -246,6 +288,17 @@ export function EntryEditor({ entry, destinations, users }: EntryEditorProps) {
           </span>
           <TagRow entryId={entry.id} tags={entry.tags} />
         </div>
+        {assistAvailable ? (
+          <EntryAssist
+            entryId={entry.id}
+            whatFilled={whatFilled}
+            anyFilled={anyFilled}
+            beforeRun={async () => {
+              await flush();
+            }}
+            onAcceptTitleSummary={acceptTitleSummary}
+          />
+        ) : null}
       </div>
 
       {/* The five sections, fixed order, one editor component. */}
@@ -256,14 +309,21 @@ export function EntryEditor({ entry, destinations, users }: EntryEditorProps) {
             template={entry.template}
             kind={section.kind}
             body={bodies[section.id] ?? ""}
-            onChange={(body) => {
-              setBodies((prev) => ({ ...prev, [section.id]: body }));
-              latest.current = {
-                ...latest.current,
-                bodies: { ...latest.current.bodies, [section.id]: body },
-              };
-              scheduleSave();
-            }}
+            onChange={(body) => updateBody(section.id, body)}
+            assist={
+              assistAvailable ? (
+                <TightenAssist
+                  entryId={entry.id}
+                  kind={section.kind}
+                  body={bodies[section.id] ?? ""}
+                  onAccept={(text) => updateBody(section.id, text)}
+                />
+              ) : null
+            }
+            blocks={
+              <SectionBlocks sectionId={section.id} blocks={section.blocks} />
+            }
+            hasBlocks={section.blocks.length > 0}
             extra={
               section.kind === "WHO" ? (
                 <AssignmentPicker
@@ -281,6 +341,12 @@ export function EntryEditor({ entry, destinations, users }: EntryEditorProps) {
           />
         ))}
       </div>
+
+      {canDelete ? (
+        <div className="mt-16 border-t border-hairline pt-6">
+          <DeleteEntryAction entryId={entry.id} title={title} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -290,16 +356,23 @@ function SectionEditor({
   kind,
   body,
   onChange,
+  assist,
+  blocks,
+  hasBlocks,
   extra,
 }: {
   template: Template;
   kind: Kind;
   body: string;
   onChange: (body: string) => void;
+  assist: React.ReactNode;
+  blocks: React.ReactNode;
+  hasBlocks: boolean;
   extra: React.ReactNode;
 }) {
   const filled = body.trim() !== "";
-  const [expanded, setExpanded] = useState(filled);
+  const hasContent = filled || hasBlocks;
+  const [expanded, setExpanded] = useState(hasContent);
 
   return (
     <section
@@ -307,22 +380,26 @@ function SectionEditor({
         // The 2px rail: accent when filled, muted when empty. Square
         // corners — no rounding on single-sided borders.
         "border-l-2 pl-5",
-        filled ? "border-accent" : "border-hairline-strong",
+        hasContent ? "border-accent" : "border-hairline-strong",
       )}
     >
       <h2 className="section-label">{sectionLabel(template, kind)}</h2>
-      {expanded || filled ? (
+      {expanded || hasContent ? (
         <>
           <p className="mt-1 text-meta text-ink-faint">{sectionHint(template, kind)}</p>
           <Textarea
             variant="bare"
             autoGrow
-            autoFocus={expanded && !filled}
+            autoFocus={expanded && !hasContent}
             value={body}
             onChange={(e) => onChange(e.target.value)}
             aria-label={`${sectionLabel(template, kind)} body`}
             className="mt-2 -ml-2.5"
           />
+          {assist}
+          {/* Blocks and their chips only appear once the section is open,
+              so collapsed sections stay quiet. */}
+          {blocks}
         </>
       ) : (
         // Empty and collapsed: a one-line prompt keeps first load short

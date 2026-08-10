@@ -23,16 +23,26 @@ export default async function HomePage(props: PageProps<"/">) {
   const [categoryCount, entryCount, skillCount] = await Promise.all([
     db.category.count({ where: { archivedAt: null } }),
     db.entry.count({
-      where: { status: { not: "archived" }, category: { archivedAt: null } },
+      where: {
+        status: { not: "archived" },
+        deletedAt: null,
+        category: { archivedAt: null },
+      },
     }),
     db.skill.count({
-      where: { entry: { status: { not: "archived" }, category: { archivedAt: null } } },
+      where: {
+        entry: {
+          status: { not: "archived" },
+          deletedAt: null,
+          category: { archivedAt: null },
+        },
+      },
     }),
   ]);
 
   const mineEntries = mine
     ? await db.entry.findMany({
-        where: { ownerId: user?.id ?? "", status: { not: "archived" } },
+        where: { ownerId: user?.id ?? "", status: { not: "archived" }, deletedAt: null },
         orderBy: { updatedAt: "desc" },
         take: 50,
         include: {

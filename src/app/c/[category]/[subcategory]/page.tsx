@@ -37,7 +37,7 @@ export default async function SubcategoryPage(
     include: {
       category: true,
       entries: {
-        where: { status: { not: "archived" } },
+        where: { status: { not: "archived" }, deletedAt: null },
         orderBy: { updatedAt: "desc" },
         select: {
           id: true,
@@ -60,7 +60,9 @@ export default async function SubcategoryPage(
 
   const words = vocab(sub.category.kind);
   const skillCount = await db.skill.count({
-    where: { entry: { subcategoryId: sub.id, status: { not: "archived" } } },
+    where: {
+      entry: { subcategoryId: sub.id, status: { not: "archived" }, deletedAt: null },
+    },
   });
 
   return (

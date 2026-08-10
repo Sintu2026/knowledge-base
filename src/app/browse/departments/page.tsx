@@ -16,7 +16,11 @@ export default async function BrowseDepartmentsPage() {
     orderBy: { order: "asc" },
     include: {
       subcategories: { where: { archivedAt: null }, select: { id: true } },
-      _count: { select: { entries: { where: { status: { not: "archived" } } } } },
+      _count: {
+        select: {
+          entries: { where: { status: { not: "archived" }, deletedAt: null } },
+        },
+      },
     },
   });
 

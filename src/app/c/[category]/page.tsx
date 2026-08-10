@@ -30,7 +30,11 @@ export default async function CategoryPage(props: PageProps<"/c/[category]">) {
         where: { archivedAt: null },
         orderBy: { order: "asc" },
         include: {
-          _count: { select: { entries: { where: { status: { not: "archived" } } } } },
+          _count: {
+            select: {
+              entries: { where: { status: { not: "archived" }, deletedAt: null } },
+            },
+          },
         },
       },
     },
@@ -40,7 +44,9 @@ export default async function CategoryPage(props: PageProps<"/c/[category]">) {
   const words = vocab(category.kind);
   const entryCount = category.subcategories.reduce((n, s) => n + s._count.entries, 0);
   const skillCount = await db.skill.count({
-    where: { entry: { categoryId: category.id, status: { not: "archived" } } },
+    where: {
+      entry: { categoryId: category.id, status: { not: "archived" }, deletedAt: null },
+    },
   });
 
   const countsLine =

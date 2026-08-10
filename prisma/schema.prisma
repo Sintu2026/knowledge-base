@@ -107,6 +107,9 @@ model Entry {
   version            Int           @default(1)
   reviewedAt         DateTime?
   reviewIntervalDays Int?
+  // Soft delete: rows are never removed, so deletion stays recoverable.
+  // A set deletedAt drops the entry from search (trigger) and browse (filters).
+  deletedAt          DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 

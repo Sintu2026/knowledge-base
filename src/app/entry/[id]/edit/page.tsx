@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { canDeleteEntry } from "@/lib/access";
 import { db } from "@/lib/db";
 import { EntryEditor, type EditorEntry } from "@/components/editor/EntryEditor";
 
 export const metadata = { title: "Edit — Knowledge base" };
 
 export default async function EntryEditPage(props: PageProps<"/entry/[id]/edit">) {
-  const [{ id }] = await Promise.all([props.params, getCurrentUser()]);
+  const [{ id }, user] = await Promise.all([props.params, getCurrentUser()]);
 
   const entry = await db.entry.findUnique({
     where: { id },
@@ -14,10 +15,13 @@ export default async function EntryEditPage(props: PageProps<"/entry/[id]/edit">
       owner: true,
       tags: { include: { tag: true } },
       assignments: { include: { user: true }, orderBy: { role: "asc" } },
-      sections: { orderBy: { order: "asc" } },
+      sections: {
+        orderBy: { order: "asc" },
+        include: { blocks: { orderBy: { order: "asc" } } },
+      },
     },
   });
-  if (!entry) notFound();
+  if (!entry || entry.deletedAt) notFound();
 
   const categories = await db.category.findMany({
     where: { archivedAt: null },
@@ -55,12 +59,25 @@ export default async function EntryEditPage(props: PageProps<"/entry/[id]/edit">
       userId: a.userId,
       userName: a.user.name,
     })),
-    sections: entry.sections.map((s) => ({ id: s.id, kind: s.kind, body: s.body })),
+    sections: entry.sections.map((s) => ({
+      id: s.id,
+      kind: s.kind,
+      body: s.body,
+      blocks: s.blocks.map((b) => ({ id: b.id, type: b.type, payload: b.payload })),
+    })),
   };
 
   return (
     <div className="flex min-h-full flex-col">
-      <EntryEditor entry={editorEntry} destinations={destinations} users={users} />
+      <EntryEditor
+        entry={editorEntry}
+        destinations={destinations}
+        users={users}
+        canDelete={canDeleteEntry(user, entry)}
+        // The editor works fully without a key — assist actions simply
+        // don't render, and the actions re-check server-side.
+        assistAvailable={Boolean(process.env.ANTHROPIC_API_KEY)}
+      />
     </div>
   );
 }

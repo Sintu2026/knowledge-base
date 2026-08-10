@@ -10,8 +10,9 @@ import type {
 /*
  * Full-text search over SearchDoc (maintained by Postgres triggers — see the
  * init migration), merged with trigram title matches for typo tolerance.
- * Only published entries surface: drafts have no docs at all, and archived
- * docs are filtered by the status join here.
+ * Only published entries surface: drafts and soft-deleted entries have no
+ * docs at all, and archived docs are filtered by the status join here (the
+ * deletedAt check is belt-and-braces on the same join).
  */
 
 export const HL_START = "«";
@@ -110,7 +111,7 @@ export async function search(q: string): Promise<SearchResponse> {
         SELECT e.id, m.rank, e."updatedAt"
         FROM merged m
         JOIN "Entry" e ON e.id = m.id
-        WHERE e.status = 'published'
+        WHERE e.status = 'published' AND e."deletedAt" IS NULL
         ORDER BY m.rank DESC, e."updatedAt" DESC
         LIMIT 20
       )
@@ -145,7 +146,7 @@ export async function search(q: string): Promise<SearchResponse> {
         FROM merged m
         JOIN "Skill" sk ON sk.id = m.id
         JOIN "Entry" e ON e.id = sk."entryId"
-        WHERE e.status = 'published'
+        WHERE e.status = 'published' AND e."deletedAt" IS NULL
         ORDER BY m.rank DESC
         LIMIT 10
       )
@@ -169,7 +170,7 @@ export async function search(q: string): Promise<SearchResponse> {
       SELECT c.name, '/c/' || c.slug AS href, c.slug AS "categorySlug",
              (SELECT count(*)::int FROM "Subcategory" s WHERE s."categoryId" = c.id AND s."archivedAt" IS NULL) ||
                CASE WHEN c.kind = 'SOFTWARE' THEN ' modules · ' ELSE ' areas · ' END ||
-               (SELECT count(*)::int FROM "Entry" e WHERE e."categoryId" = c.id AND e.status = 'published') ||
+               (SELECT count(*)::int FROM "Entry" e WHERE e."categoryId" = c.id AND e.status = 'published' AND e."deletedAt" IS NULL) ||
                CASE WHEN c.kind = 'SOFTWARE' THEN ' features' ELSE ' processes' END AS detail
       FROM "Category" c
       WHERE c."archivedAt" IS NULL
@@ -180,7 +181,7 @@ export async function search(q: string): Promise<SearchResponse> {
     db.$queryRaw<TaxonomyRow[]>(Prisma.sql`
       SELECT c.name || ' › ' || s.name AS name,
              '/c/' || c.slug || '/' || s.slug AS href, c.slug AS "categorySlug",
-             (SELECT count(*)::int FROM "Entry" e WHERE e."subcategoryId" = s.id AND e.status = 'published') ||
+             (SELECT count(*)::int FROM "Entry" e WHERE e."subcategoryId" = s.id AND e.status = 'published' AND e."deletedAt" IS NULL) ||
                CASE WHEN c.kind = 'SOFTWARE' THEN ' features' ELSE ' processes' END AS detail
       FROM "Subcategory" s
       JOIN "Category" c ON c.id = s."categoryId"
