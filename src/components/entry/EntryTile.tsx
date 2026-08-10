@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { LinkCard } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 
 type EntryTileProps = {
@@ -11,18 +10,24 @@ type EntryTileProps = {
   overdue?: boolean;
 };
 
-// Compact tile for category pages: title, then a muted line with skill
-// count and difficulty (§8.2).
+// Compact borderless block for category pages: title, then a muted line
+// with skill count and difficulty (§8.2). Badges keep their own slot so
+// the meta line stays uniform.
 export function EntryTile({ href, title, meta, draft, overdue }: EntryTileProps) {
   return (
-    <LinkCard href={href} className="flex min-h-[4.5rem] flex-col gap-1 p-3">
-      <span className="text-sm text-ink">{title}</span>
-      <span className="mt-auto flex flex-wrap items-center gap-1.5 text-[13px] text-ink-muted">
+    <Link
+      href={href}
+      className="group flex flex-col gap-1.5 rounded-control transition-transform duration-150 ease-out hover:-translate-y-0.5"
+    >
+      <span className="text-[1.0625rem] font-medium leading-snug tracking-[-0.015em] text-ink group-hover:text-accent">
+        {title}
+      </span>
+      <span className="flex flex-wrap items-center gap-1.5 text-meta text-ink-faint">
         {meta.length > 0 ? <span>{meta.join(" · ")}</span> : null}
         {draft ? <Badge>Draft</Badge> : null}
         {overdue ? <Badge variant="warning">Review overdue</Badge> : null}
       </span>
-    </LinkCard>
+    </Link>
   );
 }
 
@@ -31,15 +36,15 @@ type AddTileProps = {
   label: string;
 };
 
-// The last tile in every grid: contribution one click from where the gap
-// is visible.
+// Contribution stays one click from where the gap is visible — as a quiet
+// text link now, not a dashed box competing with real content.
 export function AddTile({ href, label }: AddTileProps) {
   return (
     <Link
       href={href}
-      className="flex min-h-[4.5rem] items-center justify-center gap-1.5 rounded-card border border-dashed border-hairline-strong p-3 text-sm text-ink-muted transition-colors hover:border-accent hover:text-accent"
+      className="inline-flex items-center gap-1.5 self-start rounded-control text-sm text-ink-faint transition-colors hover:text-accent"
     >
-      <Plus size={16} aria-hidden />
+      <Plus size={15} aria-hidden />
       {label}
     </Link>
   );

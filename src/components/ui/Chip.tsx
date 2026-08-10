@@ -3,15 +3,14 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 
 /*
- * Filter chip. Active state is both tinted and medium-weight, so colour
- * is never the only signal.
+ * Filter chip — a plain text link, no pill furniture. The active one is
+ * full-weight ink; weight (not just colour) carries the state.
  */
 
 const chipBase =
-  "inline-flex h-7 select-none items-center gap-1 rounded-control border px-2.5 text-[13px] transition-colors";
-const chipInactive =
-  "border-hairline text-ink-muted hover:border-hairline-strong hover:text-ink";
-const chipActive = "border-transparent bg-accent-tint font-medium text-accent";
+  "inline-flex h-7 select-none items-center gap-1 rounded-control px-1.5 text-sm transition-colors";
+const chipInactive = "text-ink-muted hover:text-ink";
+const chipActive = "font-medium text-ink";
 
 export function chipClasses(active: boolean, className?: string) {
   return cn(chipBase, active ? chipActive : chipInactive, className);

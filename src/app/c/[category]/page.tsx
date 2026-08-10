@@ -78,26 +78,26 @@ export default async function CategoryPage(props: PageProps<"/c/[category]">) {
   return (
     <PageShell user={user}>
       <Breadcrumbs items={[{ label: "Browse", href: "/" }, { label: category.name }]} />
-      <div className="mt-4">
-        <h1 className="text-page-title font-medium">{category.name}</h1>
-        <p className="mt-1 text-sm text-ink-muted">{countsLine}</p>
+      <div className="mt-8">
+        <h1 className="text-page-title text-ink">{category.name}</h1>
+        <p className="mt-3 text-sm text-ink-muted">{countsLine}</p>
         {category.description ? (
-          <p className="mt-2 max-w-2xl text-sm text-ink-muted">{category.description}</p>
+          <p className="mt-4 max-w-2xl text-sm text-ink-muted">{category.description}</p>
         ) : null}
       </div>
 
-      <div className="mt-5">
+      <div className="mt-10">
         <CategoryFilters kind={category.kind} />
       </div>
 
-      <div className="mt-2 divide-y divide-hairline">
+      <div className="mt-4 divide-y divide-hairline">
         {category.subcategories.map((sub) => {
           const visible = sub.entries.filter(matches);
           return (
-            <section key={sub.id} className="py-6">
-              <div className="flex items-baseline gap-2">
-                <h2 className="text-section-head font-medium">{sub.name}</h2>
-                <span className="text-sm text-ink-muted">
+            <section key={sub.id} className="py-10">
+              <div className="flex items-baseline gap-2.5">
+                <h2 className="text-section-head text-ink">{sub.name}</h2>
+                <span className="text-meta text-ink-faint">
                   {plural(sub.entries.length, words.entry, words.entryPlural)}
                 </span>
                 <LinkButton
@@ -110,18 +110,18 @@ export default async function CategoryPage(props: PageProps<"/c/[category]">) {
                 </LinkButton>
               </div>
               {sub.entries.length === 0 ? (
-                <div className="mt-3 flex items-center justify-between text-sm text-ink-muted">
+                <div className="mt-5 flex items-center justify-between text-sm text-ink-muted">
                   <span>No {words.entryPlural} yet</span>
                   <LinkButton href={`/new?subcategory=${sub.id}`} variant="ghost" size="sm">
                     Add the first one
                   </LinkButton>
                 </div>
               ) : visible.length === 0 && filtersActive ? (
-                <p className="mt-3 text-sm text-ink-muted">
+                <p className="mt-5 text-sm text-ink-muted">
                   Nothing in {sub.name} matches the filters.
                 </p>
               ) : (
-                <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
+                <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-7 gap-y-8">
                   {visible.map((entry) => (
                     <EntryTile
                       key={entry.id}

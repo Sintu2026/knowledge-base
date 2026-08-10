@@ -1,29 +1,32 @@
+import Link from "next/link";
 import { FileText, Video, Workflow } from "lucide-react";
-import { LinkCard } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 
 const SECTION_LABELS = ["What", "Why", "How", "Who", "When"] as const;
 
-// The completeness signal — the most important thing on the card. Filled
-// pills are tinted and medium-weight; empty ones outlined and faint, so
-// colour is never the only distinction.
-function SectionPills({ filled }: { filled: boolean[] }) {
+// The completeness signal: five 16×3px bars, filled accent / empty muted.
+// Same information as the old pills, far less furniture. A visually hidden
+// summary carries the signal for screen readers, where colour can't.
+export function SectionBars({ filled }: { filled: boolean[] }) {
+  const filledNames = SECTION_LABELS.filter((_, i) => filled[i]);
   return (
-    <span className="flex flex-wrap gap-1">
+    <span className="inline-flex items-center gap-[5px]" aria-hidden={false}>
       {SECTION_LABELS.map((label, i) => (
         <span
           key={label}
+          title={`${label} — ${filled[i] ? "filled" : "empty"}`}
+          aria-hidden
           className={cn(
-            "inline-flex h-5 items-center rounded-control px-1.5 text-[11px]",
-            filled[i]
-              ? "bg-accent-tint font-medium text-accent"
-              : "border border-hairline text-ink-faint",
+            "h-[3px] w-4 rounded-full",
+            filled[i] ? "bg-accent" : "bg-hairline-strong",
           )}
-        >
-          {label}
-        </span>
+        />
       ))}
+      <span className="sr-only">
+        {filledNames.length} of 5 sections filled
+        {filledNames.length > 0 ? `: ${filledNames.join(", ")}` : ""}
+      </span>
     </span>
   );
 }
@@ -41,46 +44,55 @@ export type EntryCardData = {
   documentCount: number;
 };
 
+// A borderless content block — separation comes from the grid's whitespace
+// (32px vertical, 28px horizontal), not from boxes.
 export function EntryCard({ entry }: { entry: EntryCardData }) {
+  const hasCounts =
+    entry.skillCount > 0 || entry.workflowCount > 0 || entry.documentCount > 0;
   return (
-    <LinkCard href={`/entry/${entry.id}`} className="flex flex-col gap-2 p-4">
-      <span className="flex items-start justify-between gap-2">
-        <SectionPills filled={entry.filled} />
-        <span className="flex gap-1">
-          {entry.draft ? <Badge>Draft</Badge> : null}
-          {entry.overdue ? <Badge variant="warning">Review overdue</Badge> : null}
-        </span>
+    <Link
+      href={`/entry/${entry.id}`}
+      className="group flex flex-col gap-2.5 rounded-control transition-transform duration-150 ease-out hover:-translate-y-0.5"
+    >
+      <span className="flex items-center gap-2.5">
+        <SectionBars filled={entry.filled} />
+        {entry.draft ? <Badge>Draft</Badge> : null}
+        {entry.overdue ? <Badge variant="warning">Review overdue</Badge> : null}
       </span>
-      <span className="text-sm font-medium text-ink">{entry.title}</span>
+      <span className="text-card-title text-ink group-hover:text-accent">
+        {entry.title}
+      </span>
       {entry.summary ? (
-        <span className="line-clamp-2 text-[13px] text-ink-muted">{entry.summary}</span>
+        <span className="line-clamp-2 text-sm text-ink-muted">{entry.summary}</span>
       ) : null}
-      <span className="mt-auto flex items-center justify-between gap-2 pt-1 text-[13px] text-ink-muted">
+      <span className="mt-auto flex items-center justify-between gap-2 pt-0.5 text-meta text-ink-faint">
         <span className="truncate">{entry.breadcrumb}</span>
-        <span className="flex shrink-0 items-center gap-2">
-          {entry.skillCount > 0 ? (
-            <span className="inline-flex items-center gap-1">
-              <Video size={14} aria-hidden />
-              {entry.skillCount}
-              <span className="sr-only">skill recordings</span>
-            </span>
-          ) : null}
-          {entry.workflowCount > 0 ? (
-            <span className="inline-flex items-center gap-1">
-              <Workflow size={14} aria-hidden />
-              {entry.workflowCount}
-              <span className="sr-only">workflows</span>
-            </span>
-          ) : null}
-          {entry.documentCount > 0 ? (
-            <span className="inline-flex items-center gap-1">
-              <FileText size={14} aria-hidden />
-              {entry.documentCount}
-              <span className="sr-only">documents</span>
-            </span>
-          ) : null}
-        </span>
+        {hasCounts ? (
+          <span className="flex shrink-0 items-center gap-2.5">
+            {entry.skillCount > 0 ? (
+              <span className="inline-flex items-center gap-1">
+                <Video size={13} aria-hidden />
+                {entry.skillCount}
+                <span className="sr-only">skill recordings</span>
+              </span>
+            ) : null}
+            {entry.workflowCount > 0 ? (
+              <span className="inline-flex items-center gap-1">
+                <Workflow size={13} aria-hidden />
+                {entry.workflowCount}
+                <span className="sr-only">workflows</span>
+              </span>
+            ) : null}
+            {entry.documentCount > 0 ? (
+              <span className="inline-flex items-center gap-1">
+                <FileText size={13} aria-hidden />
+                {entry.documentCount}
+                <span className="sr-only">documents</span>
+              </span>
+            ) : null}
+          </span>
+        ) : null}
       </span>
-    </LinkCard>
+    </Link>
   );
 }

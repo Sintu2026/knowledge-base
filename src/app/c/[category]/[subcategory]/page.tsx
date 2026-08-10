@@ -66,15 +66,15 @@ export default async function SubcategoryPage(
           { label: sub.name },
         ]}
       />
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="mt-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-page-title font-medium">{sub.name}</h1>
-          <p className="mt-1 text-sm text-ink-muted">
+          <h1 className="text-page-title text-ink">{sub.name}</h1>
+          <p className="mt-3 text-sm text-ink-muted">
             {plural(sub.entries.length, words.entry, words.entryPlural)}
             {skillCount > 0 ? ` · ${plural(skillCount, "skill recording")}` : ""}
           </p>
           {sub.description ? (
-            <p className="mt-2 max-w-2xl text-sm text-ink-muted">{sub.description}</p>
+            <p className="mt-4 max-w-2xl text-sm text-ink-muted">{sub.description}</p>
           ) : null}
         </div>
         <LinkButton href={`/new?subcategory=${sub.id}`} variant="primary">
@@ -82,7 +82,7 @@ export default async function SubcategoryPage(
         </LinkButton>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-10">
         {sub.entries.length === 0 ? (
           <EmptyState
             title={`Nothing in ${sub.name} yet`}

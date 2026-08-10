@@ -2,6 +2,39 @@
 
 Running notes that supplement the spec. Newest at the bottom.
 
+## Design direction (reworked before step 6) — applies to every later step
+
+The spec's §3 minimalism, taken further: spacious, large type, minimal
+chrome, Apple-adjacent. Structure was right; furniture was wrong.
+
+- **Typeface: Inter**, loaded via next/font (`--font-inter` → `--font-sans`).
+  Never system-ui.
+- **Type scale with real contrast**, carried by tokens in globals.css (each
+  size utility bundles its weight and tracking):
+  - `text-page-title` — 34px / 500 / -0.025em. Every page opens on a hero
+    title with generous space; never straight into controls.
+  - `text-card-title` — 19px / 500 / -0.02em.
+  - `text-section-head` — 20px / 500 / -0.015em (subcategory headings).
+  - body 14px; `text-meta` — 12px for metadata, in `ink-faint`.
+- **Borders are earned.** Only genuinely interactive containers keep them
+  (inputs, secondary buttons, modals, bordered row lists). Entry cards and
+  tiles are borderless content blocks — no background, no radius —
+  separated by whitespace: 32px vertical, 28px horizontal grid gaps.
+- **Section completeness = five bars**, 16×3px, 5px apart, rounded ends.
+  Filled accent, empty `hairline-strong`. Status badges sit beside the bar
+  row, never inside it. An sr-only summary carries the signal non-visually.
+- **Filter chips are text links** — active is full-weight ink, no pill.
+- **Primary and danger actions are coloured text** — no fill, no border.
+  Weight comes from colour and placement, not saturation.
+- **Motion**: under 200ms, eased, opacity and transform only. Cards lift
+  -2px on hover (`duration-150 ease-out`); titles shift to accent.
+- **Whitespace**: page shell `py-10/14`, heroes with `mt-8`+, section rows
+  `py-10`, grids as above. When in doubt, add space rather than a line.
+
+This rework resolved three step-4 polish notes (Add-knowledge weight, badge
+placement, dashed add-tile prominence — now a plain text link) and the
+step-3 draft-badge note (tiles show meta and badge together).
+
 ## For step 7 (block system)
 
 - **Workflow vs SOP chip hints (from step-2 review).** The two block types

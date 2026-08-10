@@ -82,7 +82,7 @@ export function SearchBar() {
         }}
         placeholder="Search the knowledge base"
         aria-label="Search the knowledge base"
-        className="h-9 w-full rounded-control border border-hairline bg-surface pl-9 pr-3 text-sm text-ink transition-colors placeholder:text-ink-faint focus:border-hairline-strong"
+        className="h-10 w-full rounded-control border border-hairline bg-surface pl-9 pr-3 text-sm text-ink transition-colors placeholder:text-ink-faint focus:border-hairline-strong"
       />
     </div>
   );

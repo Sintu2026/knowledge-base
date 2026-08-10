@@ -32,7 +32,7 @@ function Highlight({ text }: { text: string }) {
 }
 
 function GroupHeading({ children }: { children: string }) {
-  return <h2 className="section-label mt-6 mb-1">{children}</h2>;
+  return <h2 className="section-label mt-10 mb-3">{children}</h2>;
 }
 
 export function SearchResults() {
@@ -136,13 +136,13 @@ export function SearchResults() {
 
   const rowClass = (index: number) =>
     cn(
-      "-mx-2 flex flex-col gap-0.5 rounded-control px-2 py-2 transition-colors hover:bg-sunken",
+      "-mx-3 flex flex-col gap-1 rounded-control px-3 py-3 transition-colors hover:bg-sunken",
       selected === index && "bg-sunken",
     );
   let index = -1;
 
   return (
-    <div ref={listRef} className="mt-4">
+    <div ref={listRef} className="mt-8">
       <p className="text-sm text-ink-muted" role="status">
         {plural(data.total, "result")} across {plural(data.categoryCount, "category", "categories")}
       </p>
@@ -154,8 +154,8 @@ export function SearchResults() {
             index++;
             return (
               <Link key={hit.href} href={hit.href} data-index={index} className={rowClass(index)}>
-                <span className="text-sm text-ink">{hit.name}</span>
-                <span className="text-[13px] text-ink-muted">{hit.detail}</span>
+                <span className="text-[1.0625rem] font-medium tracking-[-0.015em] text-ink">{hit.name}</span>
+                <span className="text-meta text-ink-faint">{hit.detail}</span>
               </Link>
             );
           })}
@@ -175,12 +175,12 @@ export function SearchResults() {
                 className={rowClass(index)}
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-sm text-ink">{hit.title}</span>
+                  <span className="text-[1.0625rem] font-medium tracking-[-0.015em] text-ink">{hit.title}</span>
                   <Badge>{hit.template === "FEATURE" ? "Feature" : "Process"}</Badge>
                 </span>
-                <span className="text-[13px] text-ink-muted">{hit.breadcrumb}</span>
+                <span className="text-meta text-ink-faint">{hit.breadcrumb}</span>
                 {hit.snippet ? (
-                  <span className="line-clamp-1 text-[13px] text-ink-muted">
+                  <span className="line-clamp-1 text-sm text-ink-muted">
                     {hit.section ? (
                       <span className="text-ink">
                         {sectionLabel(hit.template, hit.section)} —{" "}
@@ -207,16 +207,16 @@ export function SearchResults() {
               <Link key={hit.id} href={href} data-index={index} className={rowClass(index)}>
                 <span className="flex items-center gap-2">
                   <Video size={16} aria-hidden className="shrink-0 text-ink-muted" />
-                  <span className="text-sm text-ink">{hit.title}</span>
+                  <span className="text-[1.0625rem] font-medium tracking-[-0.015em] text-ink">{hit.title}</span>
                   {hit.durationSeconds !== null ? (
-                    <span className="text-[13px] text-ink-muted">
+                    <span className="text-meta text-ink-faint">
                       {formatDuration(hit.durationSeconds)}
                     </span>
                   ) : null}
                 </span>
-                <span className="text-[13px] text-ink-muted">{hit.breadcrumb}</span>
+                <span className="text-meta text-ink-faint">{hit.breadcrumb}</span>
                 {hit.snippet ? (
-                  <span className="line-clamp-1 text-[13px] text-ink-muted">
+                  <span className="line-clamp-1 text-sm text-ink-muted">
                     <Highlight text={hit.snippet} />
                   </span>
                 ) : null}

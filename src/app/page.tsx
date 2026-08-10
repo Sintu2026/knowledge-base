@@ -79,9 +79,18 @@ export default async function HomePage(props: PageProps<"/">) {
 
   return (
     <PageShell user={user}>
+      {/* The hero: the page opens on a title with room to breathe, not on
+          an input. */}
+      <div>
+        <h1 className="text-page-title text-ink">Knowledge base</h1>
+        <p className="mt-3 text-sm text-ink-muted">
+          What the team keeps re-explaining, written down once.
+        </p>
+      </div>
+
       {/* The search slot: full-width input plus the page's one accent action.
           This row must not move or resize between browse and results states. */}
-      <div className="flex items-center gap-3">
+      <div className="mt-9 flex items-center gap-2">
         <SearchBar />
         <LinkButton href="/new" variant="primary" className="shrink-0">
           Add knowledge
@@ -113,20 +122,20 @@ export default async function HomePage(props: PageProps<"/">) {
             <SearchResults />
           ) : (
             <>
-              <div className="mt-5">
+              <div className="mt-10">
                 <BrowseFilters categories={categories} />
               </div>
               {mine ? (
-                <p className="mt-4 text-sm text-ink-muted">
+                <p className="mt-6 text-sm text-ink-muted">
                   Entries you own{cards.length ? ` — ${cards.length}` : ""}.
                 </p>
               ) : null}
               {cards.length === 0 ? (
-                <p className="mt-8 text-sm text-ink-muted">
+                <p className="mt-10 text-sm text-ink-muted">
                   Nothing matches these filters.
                 </p>
               ) : (
-                <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
+                <div className="mt-8 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-x-7 gap-y-8">
                   {cards.map((entry) => (
                     <EntryCard key={entry.id} entry={entry} />
                   ))}
@@ -134,7 +143,7 @@ export default async function HomePage(props: PageProps<"/">) {
               )}
             </>
           )}
-          <div className="mt-8">
+          <div className="mt-16">
             <EmptyState
               title="Add what your team keeps re-explaining"
               action={

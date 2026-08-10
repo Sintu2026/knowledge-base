@@ -214,11 +214,11 @@ export function TaxonomyAdmin({
   const byId = new Map(active.map((c) => [c.id, c]));
 
   return (
-    <div className="mt-4">
+    <div className="mt-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-page-title font-medium">Taxonomy</h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink-muted">
+          <h1 className="text-page-title text-ink">Taxonomy</h1>
+          <p className="mt-3 max-w-2xl text-sm text-ink-muted">
             Two levels, no more: categories, and the modules or areas inside
             them. Drag to reorder; archiving hides a level from browse without
             losing it.
@@ -229,7 +229,7 @@ export function TaxonomyAdmin({
         </Button>
       </div>
 
-      <div className="mt-6 divide-y divide-hairline border-y border-hairline">
+      <div className="mt-10 divide-y divide-hairline border-y border-hairline">
         {drag.order.map((id, index) => {
           const category = byId.get(id);
           if (!category) return null;
