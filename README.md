@@ -38,7 +38,18 @@ or `winget install PostgreSQL.PostgreSQL.18`. Keep port 5432 and note the
    DIRECT_URL=postgresql://kb:kb@localhost:5432/kb
    ```
 
-4. Run the dev server:
+4. Apply migrations and seed:
+
+   ```bash
+   npm run db:migrate
+   npm run db:seed
+   ```
+
+   Migrations include the search infrastructure (Postgres triggers that keep
+   the `SearchDoc` index current), so `psql` alternatives like manual table
+   creation won't work — always go through `prisma migrate`.
+
+5. Run the dev server:
 
    ```bash
    npm run dev

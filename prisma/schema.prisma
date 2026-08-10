@@ -1,0 +1,255 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CategoryKind {
+  PROCESS
+  SOFTWARE
+}
+
+enum EntryTemplate {
+  PROCESS
+  FEATURE
+}
+
+enum EntryStatus {
+  draft
+  published
+  archived
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum SectionKind {
+  WHAT
+  WHY
+  HOW
+  WHO
+  WHEN
+}
+
+enum BlockType {
+  DOCUMENT
+  WORKFLOW
+  VIDEO
+  SOP
+  LINK
+  FILE
+}
+
+enum AssignmentRole {
+  OWNER
+  APPROVER
+  CONTACT
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  avatarInitials String
+  createdAt      DateTime @default(now())
+
+  entries     Entry[]
+  assignments Assignment[]
+  revisions   Revision[]
+  comments    Comment[]
+}
+
+model Category {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  kind        CategoryKind
+  description String       @default("")
+  icon        String       @default("folder")
+  order       Int
+
+  subcategories Subcategory[]
+  entries       Entry[]
+}
+
+model Subcategory {
+  id          String @id @default(cuid())
+  categoryId  String
+  name        String
+  slug        String
+  description String @default("")
+  order       Int
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  entries  Entry[]
+
+  @@unique([categoryId, slug])
+}
+
+model Entry {
+  id                 String        @id @default(cuid())
+  title              String
+  summary            String        @default("")
+  template           EntryTemplate
+  categoryId         String
+  subcategoryId      String
+  ownerId            String
+  status             EntryStatus   @default(draft)
+  difficulty         Difficulty? // FEATURE only — CHECK constraint in migration
+  version            Int           @default(1)
+  reviewedAt         DateTime?
+  reviewIntervalDays Int?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  subcategory Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
+  owner       User        @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+
+  sections    Section[]
+  skills      Skill[]
+  tags        EntryTag[]
+  assignments Assignment[]
+  revisions   Revision[]
+  comments    Comment[]
+  searchDocs  SearchDoc[]
+
+  @@index([categoryId, status])
+  @@index([subcategoryId, status])
+  @@index([ownerId])
+  // Trigram index for typo-tolerant title search (pg_trgm, created in the
+  // init migration alongside the search functions and triggers).
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Entry_title_trgm_idx")
+}
+
+// Every entry gets all five rows at creation, in fixed order. Sections are
+// never deleted, only left empty.
+model Section {
+  id      String      @id @default(cuid())
+  entryId String
+  kind    SectionKind
+  body    String      @default("")
+  order   Int
+
+  entry    Entry     @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  blocks   Block[]
+  comments Comment[]
+
+  @@unique([entryId, kind])
+}
+
+model Block {
+  id        String    @id @default(cuid())
+  sectionId String
+  type      BlockType
+  order     Int
+  payload   Json // discriminated union on `type`, validated by Zod on write
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  skill   Skill?  @relation("SkillSop")
+
+  @@index([sectionId])
+}
+
+model Skill {
+  id                 String  @id @default(cuid())
+  entryId            String
+  title              String
+  order              Int
+  videoFileId        String?
+  videoUrl           String?
+  durationSeconds    Int?
+  posterFileId       String?
+  transcript         String?
+  transcriptSegments Json? // [{ t, text }] when the source carries timings
+  chapters           Json? // [{ t, label }]
+  sopBlockId         String? @unique
+
+  entry     Entry      @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  sopBlock  Block?     @relation("SkillSop", fields: [sopBlockId], references: [id], onDelete: SetNull)
+  searchDoc SearchDoc?
+
+  @@index([entryId])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Skill_title_trgm_idx")
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  label String @unique
+
+  entries EntryTag[]
+}
+
+model EntryTag {
+  entryId String
+  tagId   String
+
+  entry Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, tagId])
+}
+
+model Assignment {
+  id      String         @id @default(cuid())
+  entryId String
+  userId  String
+  role    AssignmentRole
+
+  entry Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, userId, role])
+}
+
+model Revision {
+  id        String   @id @default(cuid())
+  entryId   String
+  authorId  String
+  createdAt DateTime @default(now())
+  snapshot  Json
+
+  entry  Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([entryId, createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  entryId   String
+  sectionId String?
+  authorId  String
+  body      String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  entry   Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  section Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  author  User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([entryId])
+}
+
+// Maintained entirely by Postgres triggers (see the init migration).
+// One row per indexed entry (skillId null) plus one per skill. Drafts are
+// not indexed; archived entries keep their docs and are filtered at query
+// time so un-archiving is instantly searchable.
+model SearchDoc {
+  id      String                  @id
+  entryId String
+  skillId String?                 @unique
+  tsv     Unsupported("tsvector")
+
+  entry Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  skill Skill? @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([entryId])
+  @@index([tsv], type: Gin)
+}

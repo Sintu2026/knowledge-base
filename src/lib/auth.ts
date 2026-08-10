@@ -1,3 +1,4 @@
+import { cache } from "react";
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import Credentials from "next-auth/providers/credentials";
@@ -55,6 +56,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true;
     },
+    async jwt({ token, user, trigger }) {
+      // Every signed-in employee gets a User row; ownerId, authorId and
+      // Assignment all point at it. Imported lazily so the proxy bundle,
+      // which loads this module for `authorized`, never pulls in Prisma.
+      if ((trigger === "signIn" || trigger === "signUp") && user?.email) {
+        const { upsertUserByEmail } = await import("@/lib/users");
+        const dbUser = await upsertUserByEmail(user.email, user.name);
+        token.uid = dbUser.id;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      // Only a database id is ever exposed as session.user.id — tokens
+      // minted before the user row existed carry an empty id, and
+      // getCurrentUser resolves those against the database.
+      session.user.id = typeof token.uid === "string" ? token.uid : "";
+      return session;
+    },
     authorized({ auth }) {
       return Boolean(auth?.user);
     },
@@ -67,13 +86,17 @@ export type CurrentUser = {
   email: string;
 };
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const session = await auth();
-  const user = session?.user;
-  if (!user?.email) return null;
-  return {
-    id: user.id ?? user.email,
-    name: user.name ?? user.email,
-    email: user.email,
-  };
-}
+export const getCurrentUser = cache(
+  async (): Promise<CurrentUser | null> => {
+    const session = await auth();
+    const user = session?.user;
+    if (!user?.email) return null;
+    if (user.id) {
+      return { id: user.id, name: user.name ?? user.email, email: user.email };
+    }
+    // Session predates the user-row upsert — resolve (and create) it now.
+    const { upsertUserByEmail } = await import("@/lib/users");
+    const dbUser = await upsertUserByEmail(user.email, user.name);
+    return { id: dbUser.id, name: dbUser.name, email: dbUser.email };
+  },
+);
