@@ -5,6 +5,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchBar } from "@/components/search/SearchBar";
+import { SearchResults } from "@/components/search/SearchResults";
 import { BrowseFilters } from "@/components/entry/BrowseFilters";
 import { EntryCard, type EntryCardData } from "@/components/entry/EntryCard";
 
@@ -108,28 +109,30 @@ export default async function HomePage(props: PageProps<"/">) {
       ) : (
         <>
           {q ? (
-            <p className="mt-4 text-sm text-ink-muted">
-              Search arrives in build step 5 — browse is unaffected below.
-            </p>
-          ) : null}
-          <div className="mt-5">
-            <BrowseFilters categories={categories} />
-          </div>
-          {mine ? (
-            <p className="mt-4 text-sm text-ink-muted">
-              Entries you own{cards.length ? ` — ${cards.length}` : ""}.
-            </p>
-          ) : null}
-          {cards.length === 0 ? (
-            <p className="mt-8 text-sm text-ink-muted">
-              Nothing matches these filters.
-            </p>
+            // Results render in place — same page, same input position (§6).
+            <SearchResults />
           ) : (
-            <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
-              {cards.map((entry) => (
-                <EntryCard key={entry.id} entry={entry} />
-              ))}
-            </div>
+            <>
+              <div className="mt-5">
+                <BrowseFilters categories={categories} />
+              </div>
+              {mine ? (
+                <p className="mt-4 text-sm text-ink-muted">
+                  Entries you own{cards.length ? ` — ${cards.length}` : ""}.
+                </p>
+              ) : null}
+              {cards.length === 0 ? (
+                <p className="mt-8 text-sm text-ink-muted">
+                  Nothing matches these filters.
+                </p>
+              ) : (
+                <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
+                  {cards.map((entry) => (
+                    <EntryCard key={entry.id} entry={entry} />
+                  ))}
+                </div>
+              )}
+            </>
           )}
           <div className="mt-8">
             <EmptyState

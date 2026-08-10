@@ -22,6 +22,18 @@ Running notes that supplement the spec. Newest at the bottom.
   is noise. Watch it; consider dropping difficulty from tiles (keep it in the
   reader) if the distribution stays this flat.
 
+## For step 11 (polish pass) — from step-4 review
+
+- **Add knowledge weight.** The solid accent button dominates the monochrome
+  landing. Make it outlined — accent text and border, transparent fill —
+  still the page's single primary action, less weight.
+- **Badge placement on cards.** Draft / Review overdue sit inside the pill
+  row and push a pill to a second line, making those cards taller. Move the
+  badge to the footer row or give it its own line.
+- **Empty card footers.** Cards with no skill/workflow/document counts leave
+  the footer half-empty; consider dropping the footer row when there are no
+  counts.
+
 ## Decisions made in step 3
 
 - **Taxonomy archiving needs a flag the §5 data model lacks.** §8.5 requires
