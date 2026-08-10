@@ -49,6 +49,12 @@ or `winget install PostgreSQL.PostgreSQL.18`. Keep port 5432 and note the
    the `SearchDoc` index current), so `psql` alternatives like manual table
    creation won't work — always go through `prisma migrate`.
 
+   If the app later fails with a database error (a failed sign-in is the
+   usual first symptom), run `npm run db:check` — it tests the exact
+   connection the app uses and names the mismatch. Keep `DATABASE_URL` in
+   `.env` only: a stale copy in `.env.local` overrides it for the app but
+   not for the Prisma CLI, which splits them across two databases.
+
 5. Run the dev server:
 
    ```bash

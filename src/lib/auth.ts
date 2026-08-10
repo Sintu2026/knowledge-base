@@ -62,8 +62,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // which loads this module for `authorized`, never pulls in Prisma.
       if ((trigger === "signIn" || trigger === "signUp") && user?.email) {
         const { upsertUserByEmail } = await import("@/lib/users");
-        const dbUser = await upsertUserByEmail(user.email, user.name);
-        token.uid = dbUser.id;
+        try {
+          const dbUser = await upsertUserByEmail(user.email, user.name);
+          token.uid = dbUser.id;
+        } catch (error) {
+          // Surface the real cause plainly — Auth.js wraps whatever throws
+          // here into an opaque CallbackRouteError.
+          console.error(
+            "[auth] Sign-in failed: could not create or load the user row. " +
+              "Usually the app cannot reach the database — run `npm run db:check`.",
+            error,
+          );
+          throw error;
+        }
       }
       return token;
     },
