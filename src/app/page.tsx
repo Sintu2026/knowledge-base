@@ -1,53 +1,53 @@
-import { Library } from "lucide-react";
-import { getCurrentUser, signOut } from "@/lib/auth";
-import { Avatar } from "@/components/ui/Avatar";
-import { LinkButton } from "@/components/ui/Button";
+import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { PageShell } from "@/components/layout/PageShell";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { LinkButton } from "@/components/ui/Button";
+import { LinkCard } from "@/components/ui/Card";
+import { plural, vocab } from "@/lib/format";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
+  const categories = await db.category.findMany({
+    where: { archivedAt: null },
+    orderBy: { order: "asc" },
+    include: {
+      _count: { select: { entries: { where: { status: { not: "archived" } } } } },
+    },
+  });
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b border-hairline">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-2">
-            <Library size={18} className="text-accent" aria-hidden />
-            <span className="font-medium">Knowledge base</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            {user ? (
-              <form
-                action={async () => {
-                  "use server";
-                  await signOut({ redirectTo: "/signin" });
-                }}
-              >
-                <button
-                  type="submit"
-                  title={`Sign out ${user.name}`}
-                  className="flex items-center rounded-control"
-                >
-                  <Avatar name={user.name} />
-                </button>
-              </form>
-            ) : null}
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-10">
+    <PageShell user={user}>
+      <div className="flex flex-1 flex-col gap-6 py-4">
         <EmptyState
-          title="The knowledge base is being built"
-          description="Browse and search arrive in the next build steps. The component library is ready to review."
+          title="Browse and search arrive in build steps 4 and 5"
+          description="The taxonomy is live — open a category, or manage the structure in taxonomy admin."
           action={
-            <LinkButton href="/kitchen-sink" variant="primary">
-              Open the kitchen sink
-            </LinkButton>
+            <span className="flex flex-wrap justify-center gap-2">
+              <LinkButton href="/admin/taxonomy" variant="secondary">
+                Manage taxonomy
+              </LinkButton>
+              <LinkButton href="/kitchen-sink" variant="secondary">
+                Kitchen sink
+              </LinkButton>
+            </span>
           }
         />
-      </main>
-    </div>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
+          {categories.map((category) => (
+            <LinkCard key={category.id} href={`/c/${category.slug}`} className="p-3">
+              <span className="text-sm font-medium text-ink">{category.name}</span>
+              <span className="mt-1 block text-[13px] text-ink-muted">
+                {plural(
+                  category._count.entries,
+                  vocab(category.kind).entry,
+                  vocab(category.kind).entryPlural,
+                )}
+              </span>
+            </LinkCard>
+          ))}
+        </div>
+      </div>
+    </PageShell>
   );
 }

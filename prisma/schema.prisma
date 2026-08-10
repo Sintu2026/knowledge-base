@@ -73,18 +73,20 @@ model Category {
   description String       @default("")
   icon        String       @default("folder")
   order       Int
+  archivedAt  DateTime? // §8.5: archived nodes leave browse but stay restorable
 
   subcategories Subcategory[]
   entries       Entry[]
 }
 
 model Subcategory {
-  id          String @id @default(cuid())
+  id          String    @id @default(cuid())
   categoryId  String
   name        String
   slug        String
-  description String @default("")
+  description String    @default("")
   order       Int
+  archivedAt  DateTime?
 
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   entries  Entry[]
