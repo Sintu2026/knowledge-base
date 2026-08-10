@@ -47,3 +47,25 @@ const SECTION_LABELS: Record<EntryTemplate, Record<SectionKind, string>> = {
 export function sectionLabel(template: EntryTemplate, kind: SectionKind): string {
   return SECTION_LABELS[template][kind];
 }
+
+// Editor hints under each section label (§5), template-dependent.
+const SECTION_HINTS: Record<EntryTemplate, Record<SectionKind, string>> = {
+  PROCESS: {
+    WHAT: "The thing itself, in one paragraph",
+    WHY: "The reason it exists and what breaks without it",
+    HOW: "The steps, in order",
+    WHO: "Owner, approvers, and who to ask",
+    WHEN: "Triggers, deadlines, and review cadence",
+  },
+  FEATURE: {
+    WHAT: "What this feature is for",
+    WHY: "What goes wrong without it",
+    HOW: "Record yourself doing it, one skill per recording",
+    WHO: "Roles and teams who need this",
+    WHEN: "The moment in the workflow where this happens",
+  },
+};
+
+export function sectionHint(template: EntryTemplate, kind: SectionKind): string {
+  return SECTION_HINTS[template][kind];
+}

@@ -73,6 +73,23 @@ step-3 draft-badge note (tiles show meta and badge together).
   the footer half-empty; consider dropping the footer row when there are no
   counts.
 
+## Decisions made in step 6 (editor shell)
+
+- **Summary is editable under the title.** §8.3 never places Entry.summary;
+  browse cards depend on it, so the editor puts a quiet one-line input
+  directly beneath the title rather than hiding the field.
+- **Publishing writes a Revision now.** Full history/diffs are step 10, but
+  §2's "every change writes a Revision" starts mattering the moment content
+  goes live — publish records an attributable snapshot and bumps version.
+- **Template and owner are display-only in the editor.** Template is chosen
+  at /new (defaulted from the destination category's kind, changeable
+  there); ownership transfer can ride along with step 10's history work.
+- **Setting a review cadence stamps reviewedAt.** Otherwise an entry becomes
+  "overdue" the moment a cadence is chosen.
+- **Section rail state** (accent when filled) considers body text only until
+  step 7 adds blocks; the reader's completeness logic already counts blocks
+  and skills.
+
 ## Decisions made in step 3
 
 - **Taxonomy archiving needs a flag the §5 data model lacks.** §8.5 requires

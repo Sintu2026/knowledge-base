@@ -23,8 +23,8 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  md: "h-8 px-3 text-sm",
-  sm: "h-7 px-2.5 text-[13px]",
+  md: "h-8 px-3",
+  sm: "h-7 px-2.5",
 };
 
 export function buttonClasses(
@@ -32,7 +32,11 @@ export function buttonClasses(
   size: Size = "md",
   className?: string,
 ) {
-  return cn(base, variants[variant], sizes[size], className);
+  // Primary is already the max weight the system allows (500); it earns
+  // one size step instead so it reads stronger than surrounding links.
+  const text =
+    variant === "primary" && size === "md" ? "text-[15px]" : size === "md" ? "text-sm" : "text-[13px]";
+  return cn(base, variants[variant], sizes[size], text, className);
 }
 
 type ButtonProps = ComponentProps<"button"> & {

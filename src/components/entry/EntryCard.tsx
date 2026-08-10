@@ -19,7 +19,8 @@ export function SectionBars({ filled }: { filled: boolean[] }) {
           aria-hidden
           className={cn(
             "h-[3px] w-4 rounded-full",
-            filled[i] ? "bg-accent" : "bg-hairline-strong",
+            // Slightly dimmed in dark mode so titles lead the page.
+            filled[i] ? "bg-accent dark:opacity-75" : "bg-hairline-strong",
           )}
         />
       ))}
