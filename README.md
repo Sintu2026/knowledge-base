@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Knowledge Base
 
-## Getting Started
+Internal knowledge base for Caizen Homes. Next.js 16 (App Router) + Tailwind 4,
+Auth.js v5 with Microsoft Entra ID (tenant-locked), PostgreSQL.
 
-First, run the development server:
+## Local development
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Prerequisites: Node.js 20+ and a **native PostgreSQL install** (18 recommended) —
+Docker is not used. On Windows: the EDB installer from
+[postgresql.org/download/windows](https://www.postgresql.org/download/windows/)
+or `winget install PostgreSQL.PostgreSQL.18`. Keep port 5432 and note the
+`postgres` superuser password you choose.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Install dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Create the dev role and database (one time; prompts for the `postgres`
+   superuser password):
 
-## Learn More
+   ```bash
+   psql -U postgres -c "CREATE ROLE kb LOGIN PASSWORD 'kb' CREATEDB;"
+   psql -U postgres -c "CREATE DATABASE kb OWNER kb;"
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+   `CREATEDB` is required so `prisma migrate dev` can create its shadow
+   database.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Configure environment variables — copy `.env.example` to `.env` and fill in
+   the auth values. Use `.env` (not `.env.local`): Next.js reads both, but the
+   Prisma CLI only reads `.env`. The database URLs for local dev are already
+   correct in the example:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```
+   DATABASE_URL=postgresql://kb:kb@localhost:5432/kb
+   DIRECT_URL=postgresql://kb:kb@localhost:5432/kb
+   ```
 
-## Deploy on Vercel
+4. Run the dev server:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   Open [http://localhost:3000](http://localhost:3000). The UI-primitive
+   showcase lives at [/kitchen-sink](http://localhost:3000/kitchen-sink).
+
+## Deployment
+
+Netlify with Netlify Database (Neon) attached: `DATABASE_URL` is the pooled
+connection string, `DIRECT_URL` the direct one (Prisma migrations need the
+direct URL). See `.env.example` for the full variable list, including the
+Entra ID app registration values.
