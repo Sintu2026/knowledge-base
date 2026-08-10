@@ -58,11 +58,11 @@ export function SearchBar() {
   };
 
   return (
-    <div className="relative flex-1">
+    <div className="relative w-full">
       <Search
         size={16}
         aria-hidden
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
+        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted"
       />
       <input
         ref={inputRef}
@@ -82,7 +82,7 @@ export function SearchBar() {
         }}
         placeholder="Search the knowledge base"
         aria-label="Search the knowledge base"
-        className="h-10 w-full rounded-control border border-hairline bg-surface pl-9 pr-3 text-sm text-ink transition-colors placeholder:text-ink-faint focus:border-hairline-strong"
+        className="h-12 w-full rounded-full border border-hairline bg-surface pl-11 pr-5 text-sm text-ink transition-colors placeholder:text-ink-faint focus:border-hairline-strong"
       />
     </div>
   );

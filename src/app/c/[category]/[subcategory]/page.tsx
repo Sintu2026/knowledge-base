@@ -9,6 +9,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { RowLink, RowList } from "@/components/ui/Row";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { computeFilled, SectionBars } from "@/components/entry/SectionBars";
 
 export async function generateMetadata(props: PageProps<"/c/[category]/[subcategory]">) {
   const { subcategory, category } = await props.params;
@@ -18,6 +19,7 @@ export async function generateMetadata(props: PageProps<"/c/[category]/[subcateg
   return { title: row ? `${row.name} — Knowledge base` : "Knowledge base" };
 }
 
+// The only level where individual entries appear (progressive disclosure).
 export default async function SubcategoryPage(
   props: PageProps<"/c/[category]/[subcategory]">,
 ) {
@@ -45,6 +47,10 @@ export default async function SubcategoryPage(
           reviewedAt: true,
           reviewIntervalDays: true,
           createdAt: true,
+          sections: {
+            orderBy: { order: "asc" },
+            select: { kind: true, body: true, blocks: { select: { type: true } } },
+          },
           _count: { select: { skills: true } },
         },
       },
@@ -61,7 +67,10 @@ export default async function SubcategoryPage(
     <PageShell user={user}>
       <Breadcrumbs
         items={[
-          { label: "Browse", href: "/" },
+          { label: "Home", href: "/" },
+          sub.category.kind === "SOFTWARE"
+            ? { label: "Software", href: "/browse/software" }
+            : { label: "Departments", href: "/browse/departments" },
           { label: sub.category.name, href: `/c/${sub.category.slug}` },
           { label: sub.name },
         ]}
@@ -102,13 +111,13 @@ export default async function SubcategoryPage(
                 trailing={
                   <>
                     {entry._count.skills > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-[13px]">
-                        <Video size={16} aria-hidden />
+                      <span className="inline-flex items-center gap-1 text-meta">
+                        <Video size={14} aria-hidden />
                         {entry._count.skills}
                       </span>
                     ) : null}
                     {entry.difficulty ? (
-                      <span className="text-[13px]">
+                      <span className="text-meta">
                         {entry.difficulty[0] + entry.difficulty.slice(1).toLowerCase()}
                       </span>
                     ) : null}
@@ -119,7 +128,12 @@ export default async function SubcategoryPage(
                   </>
                 }
               >
-                {entry.title}
+                <span className="flex min-w-0 flex-col gap-1.5 py-1">
+                  <span className="truncate text-ink">{entry.title || "Untitled"}</span>
+                  <SectionBars
+                    filled={computeFilled(entry.sections, entry._count.skills)}
+                  />
+                </span>
               </RowLink>
             ))}
           </RowList>

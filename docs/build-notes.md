@@ -73,6 +73,31 @@ step-3 draft-badge note (tiles show meta and badge together).
   the footer half-empty; consider dropping the footer row when there are no
   counts.
 
+## Browse restructure (after step 6) — Google, not Yahoo
+
+The landing dumped twenty cards; now it is search-first and nearly empty,
+with browsing as progressive disclosure. Each level shows one kind of
+choice, so a product with twenty modules stays a clean list.
+
+- **/** — vertically centred: product name, one ~520px rounded pill search
+  input, two quiet doors (Browse software / Browse departments), one muted
+  counts line at the bottom. Nothing else. A query still renders grouped
+  results in place on this page (top-anchored, like a search engine).
+- **/browse/software** and **/browse/departments** — only the categories of
+  that kind, as small borderless tiles with module/area + entry counts.
+  "Departments" is the browse-facing word for PROCESS categories.
+- **/c/[category]** — only the modules or areas, as a plain bordered row
+  list with entry counts. No entries, no filter chips at this level.
+- **/c/[category]/[subcategory]** — the only level where entries appear.
+  The section-completeness bars moved here (onto each entry row), keeping
+  §8.1's "most important signal" alive at the moment of choosing an entry.
+- Breadcrumbs on every level: Home › Software|Departments › Category ›
+  Module. "Add knowledge" moved into the top bar, since the landing no
+  longer hosts it; "Your entries" renders as a quiet row list on /.
+- Superseded by this: §8.1's landing card grid and filter chips, and
+  §8.2's per-module entry tiles. EntryCard/EntryTile/filter-chip
+  components were deleted; SectionBars lives on in its own component.
+
 ## Decisions made in step 6 (editor shell)
 
 - **Summary is editable under the title.** §8.3 never places Entry.summary;

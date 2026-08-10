@@ -19,6 +19,13 @@ export function TopBar({ user }: TopBarProps) {
         </Link>
         <div className="flex items-center gap-2">
           <NavLinks />
+          {/* Contribution lives in the chrome now that the landing is bare. */}
+          <Link
+            href="/new"
+            className="rounded-control px-2.5 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent-tint"
+          >
+            Add knowledge
+          </Link>
           <ThemeToggle />
           {user ? (
             <form

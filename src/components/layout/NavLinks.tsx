@@ -11,7 +11,9 @@ export function NavLinks() {
   const searchParams = useSearchParams();
   const mine = searchParams.get("owner") === "me";
 
-  const browseActive = !mine && (pathname === "/" || pathname.startsWith("/c/"));
+  const browseActive =
+    !mine &&
+    (pathname === "/" || pathname.startsWith("/c/") || pathname.startsWith("/browse/"));
 
   return (
     <nav className="flex items-center gap-1">
