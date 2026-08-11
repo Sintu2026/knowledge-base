@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { canDeleteEntry } from "@/lib/access";
 import { db } from "@/lib/db";
+import { plural, sectionLabel } from "@/lib/format";
 import { EntryEditor, type EditorEntry } from "@/components/editor/EntryEditor";
 
 export const metadata = { title: "Edit — Knowledge base" };
@@ -19,6 +20,7 @@ export default async function EntryEditPage(props: PageProps<"/entry/[id]/edit">
         orderBy: { order: "asc" },
         include: { blocks: { orderBy: { order: "asc" } } },
       },
+      skills: { orderBy: { order: "asc" } },
     },
   });
   if (!entry || entry.deletedAt) notFound();
@@ -65,6 +67,32 @@ export default async function EntryEditPage(props: PageProps<"/entry/[id]/edit">
       body: s.body,
       blocks: s.blocks.map((b) => ({ id: b.id, type: b.type, payload: b.payload })),
     })),
+    skills: entry.skills.map((sk) => ({
+      id: sk.id,
+      title: sk.title,
+      videoUrl: sk.videoUrl,
+      videoFileId: sk.videoFileId,
+      durationSeconds: sk.durationSeconds,
+      posterFileId: sk.posterFileId,
+      transcript: sk.transcript,
+      transcriptSegments: sk.transcriptSegments,
+      chapters: sk.chapters,
+      sopBlockId: sk.sopBlockId,
+    })),
+    // SOP blocks anywhere on the entry can be a skill's written fallback.
+    sopBlocks: entry.sections.flatMap((s) =>
+      s.blocks
+        .filter((b) => b.type === "SOP")
+        .map((b, i, all) => {
+          const items = (b.payload as { items?: unknown[] }).items?.length ?? 0;
+          const where = sectionLabel(entry.template, s.kind);
+          const nth = all.length > 1 ? ` ${i + 1}` : "";
+          return {
+            id: b.id,
+            label: `SOP${nth} in ${where} — ${plural(items, "criterion", "criteria")}`,
+          };
+        }),
+    ),
   };
 
   return (

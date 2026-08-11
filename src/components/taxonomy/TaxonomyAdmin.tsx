@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useRef,
   useState,
   useTransition,
   type FormEvent,
@@ -18,6 +17,7 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
+import { useDragOrder } from "@/lib/use-drag-order";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -140,55 +140,6 @@ function InlineName({
       className="h-7 w-56 text-sm"
     />
   );
-}
-
-// Shared drag-and-drop ordering for one level of the list. Keyboard path:
-// the move up/down buttons on each row.
-function useDragOrder(ids: string[], commit: (ids: string[]) => void) {
-  const [order, setOrder] = useState(ids);
-  const key = ids.join("\n");
-  const [prevKey, setPrevKey] = useState(key);
-  if (prevKey !== key) {
-    // Server data changed underneath — adopt it (render-time state sync).
-    setPrevKey(key);
-    setOrder(ids);
-  }
-  // Only ever touched inside drag event handlers.
-  const from = useRef<number | null>(null);
-
-  const arrange = (list: string[], fromIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= list.length) return list;
-    const next = [...list];
-    const [id] = next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, id);
-    return next;
-  };
-
-  return {
-    order,
-    onDragStart: (index: number) => {
-      from.current = index;
-    },
-    onDragOver: (index: number) => {
-      const f = from.current;
-      if (f !== null && f !== index) {
-        setOrder((prev) => arrange(prev, f, index));
-        from.current = index;
-      }
-    },
-    onDragEnd: () => {
-      from.current = null;
-      // Handlers are re-bound every render, so `order` here is current.
-      if (order.join("\n") !== key) commit(order);
-    },
-    nudge: (index: number, delta: number) => {
-      const next = arrange(order, index, index + delta);
-      if (next.join("\n") !== key) {
-        setOrder(next);
-        commit(next);
-      }
-    },
-  };
 }
 
 function FieldLabel({ children }: { children: ReactNode }) {

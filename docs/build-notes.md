@@ -151,6 +151,38 @@ choice, so a product with twenty modules stays a clean list.
   distinction. A section with blocks counts as content for the editor rail
   and stays expanded.
 
+## Decisions made in step 8 (skills)
+
+- **The read page hosts the player early.** §8.4's full read view is step 9,
+  but deep links (`?skill=&t=`) target `/entry/[id]`, so the skills list and
+  player render there now; step 9 builds the rail and section renderers
+  around them. The deep link seeks after `loadedmetadata` and attempts
+  play — when autoplay policy declines, the player sits paused at the right
+  second, which is the promise "Jump to 0:52" actually makes.
+- **Timestamped transcript paste becomes segments.** Lines like
+  "0:12 Open the job…" parse into `transcriptSegments`, so manual
+  transcripts get search jump targets, not just imported ones. Mixed or
+  un-timestamped text stays plain — half-timed segments would produce
+  wrong jumps. Saving is a full overwrite: pasting plain text over a
+  segmented transcript drops the stale timings.
+- **Duration and poster are measured client-side** at upload (metadata +
+  canvas frame), including the MediaRecorder Infinity-duration workaround.
+  URL-sourced videos get duration best-effort and no poster (canvas would
+  taint); rows fall back to an icon.
+- **`/api/files` serves byte ranges** (206/`Content-Range`) — scrubbing
+  needs it and Safari refuses media without it. Server-action uploads are
+  capped at 200 MB with `bodySizeLimit: 250mb` in next.config (the 1 MB
+  default would have broken document blocks too).
+- **SOP attach picks from existing SOP blocks** anywhere on the entry
+  (`sopBlockId` is unique per skill — a second skill naming the same SOP is
+  told which recording holds it). Creating an SOP inline from the skill
+  form is deferred; features can add one via any other section's chips.
+- **Watched is per-viewer localStorage** via `useSyncExternalStore`
+  (server snapshot empty, same-tab writes re-render through a custom
+  event). Nothing is tracked server-side (§11: no analytics).
+- **Transcription stays a seam.** `lib/transcribe.ts` returns null;
+  the editor's paste field is the path until a service is configured.
+
 ## Decisions made in step 3
 
 - **Taxonomy archiving needs a flag the §5 data model lacks.** §8.5 requires

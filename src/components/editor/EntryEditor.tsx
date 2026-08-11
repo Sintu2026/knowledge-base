@@ -31,6 +31,11 @@ import {
 } from "@/lib/actions/entries";
 import { EntryAssist, TightenAssist } from "@/components/editor/Assist";
 import { SectionBlocks, type EditorBlock } from "@/components/editor/SectionBlocks";
+import {
+  SkillsEditor,
+  type EditorSkill,
+  type SopOption,
+} from "@/components/editor/SkillsEditor";
 import { DeleteEntryAction } from "@/components/editor/DeleteEntryAction";
 
 type Kind = "WHAT" | "WHY" | "HOW" | "WHO" | "WHEN";
@@ -48,6 +53,8 @@ export type EditorEntry = {
   tags: { id: string; label: string }[];
   assignments: { id: string; role: string; userId: string; userName: string }[];
   sections: { id: string; kind: Kind; body: string; blocks: EditorBlock[] }[];
+  skills: EditorSkill[];
+  sopBlocks: SopOption[];
 };
 
 type EntryEditorProps = {
@@ -303,13 +310,20 @@ export function EntryEditor({
 
       {/* The five sections, fixed order, one editor component. */}
       <div className="mt-12 flex flex-col gap-10">
-        {entry.sections.map((section) => (
+        {entry.sections.map((section) => {
+          // §5: for FEATURE entries the How section is an ordered list of
+          // skill recordings — block chips are replaced by the skills list
+          // and the free-text body becomes optional context.
+          const skillsSection =
+            entry.template === "FEATURE" && section.kind === "HOW";
+          return (
           <SectionEditor
             key={section.id}
             template={entry.template}
             kind={section.kind}
             body={bodies[section.id] ?? ""}
             onChange={(body) => updateBody(section.id, body)}
+            bodyOptional={skillsSection}
             assist={
               assistAvailable ? (
                 <TightenAssist
@@ -321,9 +335,20 @@ export function EntryEditor({
               ) : null
             }
             blocks={
-              <SectionBlocks sectionId={section.id} blocks={section.blocks} />
+              skillsSection ? (
+                <SkillsEditor
+                  entryId={entry.id}
+                  skills={entry.skills}
+                  sopOptions={entry.sopBlocks}
+                />
+              ) : (
+                <SectionBlocks sectionId={section.id} blocks={section.blocks} />
+              )
             }
-            hasBlocks={section.blocks.length > 0}
+            hasBlocks={
+              section.blocks.length > 0 ||
+              (skillsSection && entry.skills.length > 0)
+            }
             extra={
               section.kind === "WHO" ? (
                 <AssignmentPicker
@@ -339,7 +364,8 @@ export function EntryEditor({
               ) : null
             }
           />
-        ))}
+          );
+        })}
       </div>
 
       {canDelete ? (
@@ -356,6 +382,7 @@ function SectionEditor({
   kind,
   body,
   onChange,
+  bodyOptional,
   assist,
   blocks,
   hasBlocks,
@@ -365,6 +392,7 @@ function SectionEditor({
   kind: Kind;
   body: string;
   onChange: (body: string) => void;
+  bodyOptional: boolean;
   assist: React.ReactNode;
   blocks: React.ReactNode;
   hasBlocks: boolean;
@@ -373,6 +401,10 @@ function SectionEditor({
   const filled = body.trim() !== "";
   const hasContent = filled || hasBlocks;
   const [expanded, setExpanded] = useState(hasContent);
+  // A skills section keeps its free-text body collapsed until asked for —
+  // it's context above the list, not the point of the section (§8.3).
+  const [bodyOpen, setBodyOpen] = useState(false);
+  const showBody = !bodyOptional || filled || bodyOpen;
 
   return (
     <section
@@ -387,16 +419,28 @@ function SectionEditor({
       {expanded || hasContent ? (
         <>
           <p className="mt-1 text-meta text-ink-faint">{sectionHint(template, kind)}</p>
-          <Textarea
-            variant="bare"
-            autoGrow
-            autoFocus={expanded && !hasContent}
-            value={body}
-            onChange={(e) => onChange(e.target.value)}
-            aria-label={`${sectionLabel(template, kind)} body`}
-            className="mt-2 -ml-2.5"
-          />
-          {assist}
+          {showBody ? (
+            <>
+              <Textarea
+                variant="bare"
+                autoGrow
+                autoFocus={bodyOptional ? bodyOpen : expanded && !hasContent}
+                value={body}
+                onChange={(e) => onChange(e.target.value)}
+                aria-label={`${sectionLabel(template, kind)} body`}
+                className="mt-2 -ml-2.5"
+              />
+              {assist}
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setBodyOpen(true)}
+              className="mt-2 rounded-control text-meta text-ink-faint transition-colors hover:text-accent"
+            >
+              Add context above the recordings
+            </button>
+          )}
           {/* Blocks and their chips only appear once the section is open,
               so collapsed sections stay quiet. */}
           {blocks}
