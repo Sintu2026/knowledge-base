@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export type ComboboxOption = {
@@ -19,6 +19,13 @@ type ComboboxProps = {
   placeholder?: string;
   emptyText?: string;
   className?: string;
+  /**
+   * Creatable mode: when the typed query matches no option exactly, a
+   * final "Create …" row appears (keyboard-reachable like any option) and
+   * selecting it hands the query to the caller.
+   */
+  onCreate?: (query: string) => void;
+  createLabel?: (query: string) => string;
 };
 
 export function Combobox({
@@ -28,6 +35,8 @@ export function Combobox({
   placeholder,
   emptyText = "No matches",
   className,
+  onCreate,
+  createLabel,
 }: ComboboxProps) {
   const listId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +57,16 @@ export function Combobox({
     );
   }, [options, query]);
 
-  const clampedActive = Math.min(activeIndex, Math.max(filtered.length - 1, 0));
+  const trimmedQuery = query?.trim() ?? "";
+  // The create row shows for any non-empty query without an exact match —
+  // near-matches still list above it, so typos don't fork the taxonomy.
+  const createVisible =
+    Boolean(onCreate) &&
+    trimmedQuery !== "" &&
+    !options.some((o) => o.label.toLowerCase() === trimmedQuery.toLowerCase());
+  const itemCount = filtered.length + (createVisible ? 1 : 0);
+  const clampedActive = Math.min(activeIndex, Math.max(itemCount - 1, 0));
+  const createActive = createVisible && clampedActive === filtered.length;
 
   function openList() {
     setOpen(true);
@@ -71,17 +89,27 @@ export function Combobox({
     inputRef.current?.blur();
   }
 
+  function create() {
+    const created = trimmedQuery;
+    close();
+    inputRef.current?.blur();
+    onCreate?.(created);
+  }
+
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (!open) return openList();
-      setActiveIndex(Math.min(clampedActive + 1, filtered.length - 1));
+      setActiveIndex(Math.min(clampedActive + 1, itemCount - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (!open) return openList();
       setActiveIndex(Math.max(clampedActive - 1, 0));
     } else if (e.key === "Enter") {
-      if (open && filtered[clampedActive]) {
+      if (open && createActive) {
+        e.preventDefault();
+        create();
+      } else if (open && filtered[clampedActive]) {
         e.preventDefault();
         select(filtered[clampedActive]);
       }
@@ -101,9 +129,11 @@ export function Combobox({
         aria-expanded={open}
         aria-controls={listId}
         aria-activedescendant={
-          open && filtered[clampedActive]
-            ? `${listId}-${filtered[clampedActive].value}`
-            : undefined
+          open && createActive
+            ? `${listId}-create`
+            : open && filtered[clampedActive]
+              ? `${listId}-${filtered[clampedActive].value}`
+              : undefined
         }
         value={query ?? selected?.label ?? ""}
         placeholder={placeholder}
@@ -115,7 +145,7 @@ export function Combobox({
         onFocus={openList}
         onBlur={close}
         onKeyDown={onKeyDown}
-        className="h-8 w-full rounded-control border border-hairline bg-surface pl-2.5 pr-8 text-sm text-ink transition-colors placeholder:text-ink-faint focus:border-hairline-strong"
+        className="h-9 w-full rounded-control border border-hairline bg-surface pl-2.5 pr-8 text-sm text-ink transition-colors placeholder:text-ink-faint focus:border-hairline-strong"
       />
       <ChevronDown
         size={16}
@@ -130,7 +160,7 @@ export function Combobox({
           onMouseDown={(e) => e.preventDefault()}
           className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-control border border-hairline bg-surface py-1"
         >
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !createVisible && (
             <li className="px-2.5 py-1.5 text-sm text-ink-muted">{emptyText}</li>
           )}
           {filtered.map((option, i) => {
@@ -158,7 +188,7 @@ export function Combobox({
                 >
                   <span className="min-w-0 flex-1 truncate">{option.label}</span>
                   {option.hint && (
-                    <span className="shrink-0 text-xs text-ink-muted">
+                    <span className="shrink-0 text-meta text-ink-muted">
                       {option.hint}
                     </span>
                   )}
@@ -166,6 +196,25 @@ export function Combobox({
               </li>
             );
           })}
+          {createVisible && (
+            <li className={cn(filtered.length > 0 && "mt-1 border-t border-hairline pt-1")}>
+              <button
+                type="button"
+                id={`${listId}-create`}
+                role="option"
+                aria-selected={false}
+                onClick={create}
+                onMouseMove={() => setActiveIndex(filtered.length)}
+                className={cn(
+                  "flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left text-sm text-accent",
+                  createActive && "bg-sunken",
+                )}
+              >
+                <Plus size={14} aria-hidden />
+                {createLabel ? createLabel(trimmedQuery) : `Create “${trimmedQuery}”`}
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </div>

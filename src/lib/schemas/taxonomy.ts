@@ -29,6 +29,25 @@ export const archiveSubcategorySchema = z.object({
   moveToSubcategoryId: z.string().min(1).optional(),
 });
 
+/*
+ * Inline destination creation from the editor's picker: either a new
+ * module/area under an existing category, or a whole new category — which
+ * needs a first module, because entries live at the subcategory level.
+ */
+export const destinationCreateSchema = z.discriminatedUnion("level", [
+  z.object({
+    level: z.literal("subcategory"),
+    categoryId: z.string().min(1),
+    name: z.string().trim().min(1, "Name it first.").max(80),
+  }),
+  z.object({
+    level: z.literal("category"),
+    kind: z.enum(["PROCESS", "SOFTWARE"]),
+    name: z.string().trim().min(1, "Name it first.").max(80),
+    subName: z.string().trim().min(1, "Name the first module or area.").max(80),
+  }),
+]);
+
 export const idSchema = z.object({ id: z.string().min(1) });
 
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;

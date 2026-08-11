@@ -108,7 +108,7 @@ export default function KitchenSinkPage() {
           <Input
             variant="bare"
             placeholder="Untitled entry"
-            className="text-[22px] font-medium"
+            className="text-[26px] font-medium"
           />
           <Textarea placeholder="The thing itself, in one paragraph" autoGrow />
           <Select defaultValue="90">

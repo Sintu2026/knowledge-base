@@ -92,6 +92,16 @@ export function EntryRail({
             key={section.kind}
             href={`#section-${section.kind.toLowerCase()}`}
             aria-current={active === section.kind ? "true" : undefined}
+            onClick={(e) => {
+              // Scroll programmatically: native hash navigation refuses to
+              // re-scroll when the hash hasn't changed, so repeat clicks
+              // (and click-scroll-click-again) silently do nothing.
+              e.preventDefault();
+              const id = `section-${section.kind.toLowerCase()}`;
+              document.getElementById(id)?.scrollIntoView({ block: "start" });
+              history.replaceState(null, "", `#${id}`);
+              setActive(section.kind);
+            }}
             className={cn(
               "rounded-control py-1 pr-2 text-sm whitespace-nowrap transition-colors",
               active === section.kind

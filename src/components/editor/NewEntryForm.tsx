@@ -4,12 +4,17 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Combobox, type ComboboxOption } from "@/components/ui/Combobox";
+import type { ComboboxOption } from "@/components/ui/Combobox";
 import { Input } from "@/components/ui/Input";
+import {
+  DestinationPicker,
+  type PickerCategory,
+} from "@/components/editor/DestinationPicker";
 import { createEntry } from "@/lib/actions/entries";
 
 type NewEntryFormProps = {
   destinations: ComboboxOption[]; // subcategories, grouped by category
+  categories: PickerCategory[]; // for inline destination creation
   softwareSubcategoryIds: string[]; // to default the template by destination
   initialSubcategoryId: string | null;
   initialTitle: string;
@@ -17,6 +22,7 @@ type NewEntryFormProps = {
 
 export function NewEntryForm({
   destinations,
+  categories,
   softwareSubcategoryIds,
   initialSubcategoryId,
   initialTitle,
@@ -24,6 +30,9 @@ export function NewEntryForm({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [subcategoryId, setSubcategoryId] = useState(initialSubcategoryId);
+  // Destinations created inline this visit — the server list doesn't have
+  // them until a refresh.
+  const [extras, setExtras] = useState<ComboboxOption[]>([]);
   const [template, setTemplate] = useState<"PROCESS" | "FEATURE">(
     initialSubcategoryId && softwareSubcategoryIds.includes(initialSubcategoryId)
       ? "FEATURE"
@@ -68,16 +77,18 @@ export function NewEntryForm({
       </div>
       <div>
         <span className="section-label">Where it lives</span>
-        <Combobox
+        <DestinationPicker
           className="mt-2"
-          options={destinations}
+          destinations={[...destinations, ...extras]}
+          categories={categories}
           value={subcategoryId}
-          onChange={(id) => {
+          onSelect={(id, kind, created) => {
             setSubcategoryId(id);
-            setTemplate(softwareSubcategoryIds.includes(id) ? "FEATURE" : "PROCESS");
+            setTemplate(kind === "SOFTWARE" ? "FEATURE" : "PROCESS");
             setError(null);
+            if (created) setExtras((prev) => [...prev, created]);
           }}
-          placeholder="Search categories and modules"
+          placeholder="Search — or type a new category or module"
         />
       </div>
       <div>

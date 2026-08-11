@@ -12,7 +12,7 @@ export function Input({ variant = "default", className, ...props }: InputProps) 
       className={cn(
         "w-full text-ink placeholder:text-ink-faint",
         variant === "default" &&
-          "h-8 rounded-control border border-hairline bg-surface px-2.5 text-sm transition-colors focus:border-hairline-strong",
+          "h-9 rounded-control border border-hairline bg-surface px-2.5 text-sm transition-colors focus:border-hairline-strong",
         variant === "bare" && "bg-transparent",
         className,
       )}

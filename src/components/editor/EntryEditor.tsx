@@ -13,7 +13,11 @@ import { ArrowLeft, Plus, X } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Combobox, type ComboboxOption } from "@/components/ui/Combobox";
+import type { ComboboxOption } from "@/components/ui/Combobox";
+import {
+  DestinationPicker,
+  type PickerCategory,
+} from "@/components/editor/DestinationPicker";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
@@ -60,6 +64,7 @@ export type EditorEntry = {
 type EntryEditorProps = {
   entry: EditorEntry;
   destinations: ComboboxOption[];
+  categories: PickerCategory[];
   users: { id: string; name: string }[];
   canDelete: boolean;
   assistAvailable: boolean;
@@ -80,6 +85,7 @@ const CADENCES = [
 export function EntryEditor({
   entry,
   destinations,
+  categories,
   users,
   canDelete,
   assistAvailable,
@@ -297,7 +303,7 @@ export function EntryEditor({
           }}
           placeholder="Untitled"
           aria-label="Entry title"
-          className="w-full text-[22px] font-medium tracking-[-0.02em]"
+          className="w-full text-[26px] font-medium tracking-[-0.02em]"
         />
         <Input
           variant="bare"
@@ -312,16 +318,17 @@ export function EntryEditor({
           className="mt-1 w-full text-sm text-ink-muted"
         />
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <Combobox
-            options={destinations}
+          <DestinationPicker
+            destinations={destinations}
+            categories={categories}
             value={entry.subcategoryId}
-            onChange={(subcategoryId) =>
+            onSelect={(subcategoryId) =>
               startTransition(async () => {
                 await updateEntryMeta({ id: entry.id, subcategoryId });
                 router.refresh();
               })
             }
-            className="w-64"
+            className="w-72"
           />
           <Badge>{entry.template === "FEATURE" ? "Feature" : "Process"}</Badge>
           <span className="inline-flex items-center gap-1.5 text-meta text-ink-faint">
@@ -555,7 +562,7 @@ function TagRow({
             }
           }}
           placeholder="tag"
-          className="h-6 w-28 text-meta"
+          className="h-7 w-32 text-meta"
         />
       ) : (
         <button

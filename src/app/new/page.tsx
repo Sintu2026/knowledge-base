@@ -28,6 +28,11 @@ export default async function NewEntryPage(props: PageProps<"/new">) {
   const softwareSubcategoryIds = categories
     .filter((c) => c.kind === "SOFTWARE")
     .flatMap((c) => c.subcategories.map((s) => s.id));
+  const pickerCategories = categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    kind: c.kind,
+  }));
 
   return (
     <PageShell user={user}>
@@ -40,6 +45,7 @@ export default async function NewEntryPage(props: PageProps<"/new">) {
       </div>
       <NewEntryForm
         destinations={destinations}
+        categories={pickerCategories}
         softwareSubcategoryIds={softwareSubcategoryIds}
         initialSubcategoryId={initialSubcategoryId}
         initialTitle={initialTitle}

@@ -37,9 +37,21 @@ chrome, Apple-adjacent. Structure was right; furniture was wrong.
   Actions look like actions; the page around them stays calm, and colour
   still only lands on controls. Quiet text actions remain for tertiary
   things (assist, block chips, tags).
-- **Type scale raised one notch** *(same review)*: body/text-sm 15px,
-  meta 13px, card-title 18px, section-head 22px, page-title 38px,
-  section-label 12px. Hierarchy unchanged; baseline up.
+- **Type scale raised twice** *(both post-step-9 reviews — the first bump
+  wasn't enough)*: now body/text-sm 16px, meta 14px, card-title 20px,
+  section-head 24px, page-title 42px, section-label 13px; inputs at h-9 to
+  fit. Hierarchy unchanged; entries read comfortably without leaning in.
+- **The destination picker is creatable** *(second review — the important
+  one)*: typing an unmatched name offers "Create …" inline for both
+  levels. A new module asks which category; a new category asks its kind
+  (software/department) and a first module, because entries live at the
+  subcategory level. `createDestination` in actions/taxonomy.ts returns
+  the id to select, unlike the admin actions. Taxonomy admin is for
+  tidying up later — never a prerequisite for contributing.
+- **Rail scrolls programmatically** *(same review)*: native hash
+  navigation refuses to re-scroll when the hash hasn't changed, so repeat
+  clicks silently did nothing. Anchor clicks now preventDefault,
+  scrollIntoView, and replaceState the hash — every click scrolls.
 - **Motion**: under 200ms, eased, opacity and transform only. Cards lift
   -2px on hover (`duration-150 ease-out`); titles shift to accent.
 - **Whitespace**: page shell `py-10/14`, heroes with `mt-8`+, section rows

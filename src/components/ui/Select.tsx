@@ -8,7 +8,7 @@ export function Select({ className, children, ...props }: SelectProps) {
   return (
     <span className={cn("relative inline-flex", className)}>
       <select
-        className="h-8 w-full appearance-none rounded-control border border-hairline bg-surface pl-2.5 pr-8 text-sm text-ink transition-colors focus:border-hairline-strong"
+        className="h-9 w-full appearance-none rounded-control border border-hairline bg-surface pl-2.5 pr-8 text-sm text-ink transition-colors focus:border-hairline-strong"
         {...props}
       >
         {children}

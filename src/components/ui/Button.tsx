@@ -24,7 +24,7 @@ const variants: Record<Variant, string> = {
 
 const sizes: Record<Size, string> = {
   md: "h-9 px-4 text-sm",
-  sm: "h-8 px-3 text-[14px]",
+  sm: "h-8 px-3 text-[15px]",
 };
 
 export function buttonClasses(

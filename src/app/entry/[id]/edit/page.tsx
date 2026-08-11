@@ -100,6 +100,7 @@ export default async function EntryEditPage(props: PageProps<"/entry/[id]/edit">
       <EntryEditor
         entry={editorEntry}
         destinations={destinations}
+        categories={categories.map((c) => ({ id: c.id, name: c.name, kind: c.kind }))}
         users={users}
         canDelete={canDeleteEntry(user, entry)}
         // The editor works fully without a key — assist actions simply

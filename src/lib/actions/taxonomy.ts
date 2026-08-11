@@ -9,6 +9,7 @@ import { plural } from "@/lib/format";
 import {
   archiveSubcategorySchema,
   categoryCreateSchema,
+  destinationCreateSchema,
   idSchema,
   renameSchema,
   reorderSchema,
@@ -100,6 +101,69 @@ export async function createSubcategory(input: unknown): Promise<ActionResult> {
   });
   refresh();
   return ok;
+}
+
+export type DestinationResult =
+  | { ok: true; subcategoryId: string; categoryKind: "PROCESS" | "SOFTWARE" }
+  | { ok: false; error: string };
+
+/*
+ * Inline creation from the editor's destination picker (§ post-step-9
+ * review): taxonomy admin is for tidying up, never a prerequisite for
+ * contributing. Returns the id to select, unlike the admin actions.
+ */
+export async function createDestination(
+  input: unknown,
+): Promise<DestinationResult> {
+  const denied = await requireEditor();
+  if (denied && !denied.ok) return { ok: false, error: denied.error };
+  const parsed = destinationCreateSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+
+  if (parsed.data.level === "subcategory") {
+    const { categoryId, name } = parsed.data;
+    const category = await db.category.findUnique({ where: { id: categoryId } });
+    if (!category || category.archivedAt) {
+      return { ok: false, error: "That category is archived or gone. Pick another." };
+    }
+    const base = slugify(name);
+    const siblings = await db.subcategory.findMany({
+      where: { categoryId },
+      select: { slug: true, order: true },
+    });
+    const taken = new Set(siblings.map((s) => s.slug));
+    let slug = base;
+    for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
+    const sub = await db.subcategory.create({
+      data: {
+        categoryId,
+        name,
+        slug,
+        order: siblings.length ? Math.max(...siblings.map((s) => s.order)) + 1 : 0,
+      },
+    });
+    refresh();
+    return { ok: true, subcategoryId: sub.id, categoryKind: category.kind };
+  }
+
+  const { name, kind, subName } = parsed.data;
+  const last = await db.category.aggregate({ _max: { order: true } });
+  const slug = await uniqueCategorySlug(name);
+  const sub = await db.$transaction(async (tx) => {
+    const category = await tx.category.create({
+      data: { name, kind, slug, order: (last._max.order ?? -1) + 1 },
+    });
+    return tx.subcategory.create({
+      data: {
+        categoryId: category.id,
+        name: subName,
+        slug: slugify(subName),
+        order: 0,
+      },
+    });
+  });
+  refresh();
+  return { ok: true, subcategoryId: sub.id, categoryKind: kind };
 }
 
 export async function renameCategory(input: unknown): Promise<ActionResult> {

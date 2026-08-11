@@ -143,7 +143,7 @@ function InlineName({
 }
 
 function FieldLabel({ children }: { children: ReactNode }) {
-  return <span className="mb-1 block text-[14px] text-ink-muted">{children}</span>;
+  return <span className="mb-1 block text-[15px] text-ink-muted">{children}</span>;
 }
 
 export function TaxonomyAdmin({
@@ -277,7 +277,7 @@ function CategoryBlock({
           className="truncate text-sm font-medium"
         />
         <Badge>{category.kind === "SOFTWARE" ? "Software" : "Process"}</Badge>
-        <span className="text-[14px] text-ink-muted">
+        <span className="text-[15px] text-ink-muted">
           {plural(category.entryCount, "entry", "entries")}
         </span>
         <span className="ml-auto flex items-center">
@@ -340,7 +340,7 @@ function SubcategoryList({
 
   if (category.subcategories.length === 0) {
     return (
-      <p className="py-1.5 pl-7 text-[14px] text-ink-muted">
+      <p className="py-1.5 pl-7 text-[15px] text-ink-muted">
         No {subWord}s yet — add the first one.
       </p>
     );
@@ -427,7 +427,7 @@ function SubcategoryRow({
         onSave={(name) => run(() => renameSubcategory({ id: sub.id, name }))}
         className="truncate text-sm"
       />
-      <span className="text-[14px] text-ink-muted">
+      <span className="text-[15px] text-ink-muted">
         {plural(sub.entryCount, "entry", "entries")}
       </span>
       <span className="ml-auto flex items-center">
@@ -484,7 +484,7 @@ function ArchivedRow({
       <span className="w-[16px]" aria-hidden />
       <span className="truncate text-sm">{name}</span>
       <Badge>Archived</Badge>
-      <span className="text-[14px]">{detail}</span>
+      <span className="text-[15px]">{detail}</span>
       <span className="ml-auto flex items-center">
         <IconButton label={`Restore ${name}`} onClick={onRestore}>
           <RotateCcw size={14} />
