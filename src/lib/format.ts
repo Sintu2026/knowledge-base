@@ -26,6 +26,17 @@ export function isReviewOverdue(entry: {
   return Date.now() - last.getTime() > entry.reviewIntervalDays * 24 * 60 * 60 * 1000;
 }
 
+// Coarse relative time for review stamps — day precision is plenty.
+export function relativeTime(date: Date): string {
+  const days = Math.floor((Date.now() - date.getTime()) / (24 * 60 * 60 * 1000));
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
+  if (days < 365 * 2) return `${Math.floor(days / 30)} months ago`;
+  return `${Math.floor(days / 365)} years ago`;
+}
+
 export function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;

@@ -183,6 +183,33 @@ choice, so a product with twenty modules stays a clean list.
 - **Transcription stays a seam.** `lib/transcribe.ts` returns null;
   the editor's paste field is the path until a service is configured.
 
+## Decisions made in step 9 (read view)
+
+- **Markdown is a subset, rendered to React nodes.** The editor is a plain
+  textarea, so `components/entry/Markdown.tsx` covers what one produces:
+  blank-line paragraphs (every plain newline breaks — that's what Enter
+  means in a textarea), `- `/`1. ` lists, **bold**, inline code. No HTML
+  strings, nothing to sanitise; it's the one file to swap for a real
+  pipeline if the editor ever grows one.
+- **Rail active-state**: IntersectionObserver triggers recomputation, but
+  active = the last section whose top passed the reading line (upper
+  third), with a bottom-of-page override — "topmost visible" kept a tall
+  How section active after jumping to When. Below 900px the rail is a
+  horizontal strip pinned under the header; the Reviewed line shows in the
+  column layout only (the metadata line carries it on small screens).
+- **"Suggest an edit" writes a Comment**; unresolved comments render as a
+  quiet Suggestions list at the page foot. Resolving them (and section-
+  scoped suggestions) rides with step 10's history work.
+- **Empty sections stay in the rail, not the page** — the rail is the
+  what's-missing signal; rendering empty section shells would just be
+  scaffolding. WHO renders assignments after its body; WHEN's cadence
+  already lives in the rail/meta line.
+- **Mark reviewed stamps reviewedAt only** — it's an attestation, not a
+  content change, so no Revision is written (§2 covers content changes).
+- **Per-viewer SOP state** generalised into `lib/use-local-json.ts`
+  (useSyncExternalStore over localStorage with a same-tab change event);
+  step 11 can migrate the skills Watched store onto it.
+
 ## Decisions made in step 3
 
 - **Taxonomy archiving needs a flag the §5 data model lacks.** §8.5 requires

@@ -144,6 +144,21 @@ export async function publishEntry(input: unknown): Promise<EntryActionResult> {
   return { ok: true };
 }
 
+// The read view's "Mark reviewed" — restarts the cadence clock (§8.4).
+export async function markReviewed(input: unknown): Promise<EntryActionResult> {
+  const user = await editor();
+  if (!user) return fail("Sign in to make changes.");
+  const parsed = entryIdSchema.safeParse(input);
+  if (!parsed.success) return fail("Refresh and try again.");
+  const entry = await db.entry.findUnique({ where: { id: parsed.data.id } });
+  if (!entry || entry.deletedAt) return fail("This entry no longer exists.");
+  await db.entry.update({
+    where: { id: entry.id },
+    data: { reviewedAt: new Date() },
+  });
+  return { ok: true };
+}
+
 export async function deleteEntry(input: unknown): Promise<EntryActionResult> {
   const user = await editor();
   if (!user) return fail("Sign in to make changes.");
