@@ -1,6 +1,115 @@
-# Build notes — decisions and deferred items
+# Build notes — orientation, decisions, and deferred items
 
-Running notes that supplement the spec. Newest at the bottom.
+Read `SPEC.md` first (contract, status, amendments). This file is the
+working knowledge: how to run and verify the project, the gotchas that
+cost time once already, and every decision that isn't obvious from the
+code. Sections are grouped by topic, not strictly chronological.
+
+## Orientation for a fresh session
+
+**Workflow.** Work directly on `main` (no PRs — the branch
+`claude/docker-to-postgres-migration-dzphln` on the remote is dead
+history; ignore it). Build one step from SPEC.md's build order, verify it
+in a real browser, push, and stop for Manpreet's review. Verification
+style so far: headless-Chromium drive scripts (playwright-core) that
+click through the actual flows and assert outcomes — publish lands in
+search, deep links seek the video to the right second, failures render
+visibly. Lint (`npm run lint`) and a production build (`npm run build`)
+gate every push.
+
+**Environment.** Local dev is a native PostgreSQL install — no Docker
+(Manpreet's machine runs PostgreSQL 18 on Windows; docker was abandoned
+because the WSL backend wouldn't start). Connection strings live in
+`.env` (`DATABASE_URL` for the app pool, `DIRECT_URL` for the Prisma
+CLI); `.env.example` documents everything including the optional
+`ANTHROPIC_API_KEY` (Claude assist) and `ADMIN_EMAILS` (who may delete
+any entry). `npm run db:check` is the connection doctor — it also warns
+when `.env.local` disagrees with `.env`, which once caused an opaque
+sign-in failure (Auth.js wraps DB errors in CallbackRouteError).
+
+**Commands.** `npm run dev` · `npm run db:migrate` (prisma migrate dev) ·
+`npm run db:seed` (wipe-and-recreate; 20 realistic entries, 12 skills
+with transcripts/segments/chapters, users, placeholder PDFs in
+`uploads/`) · `npm run db:check` · `npm run search:bench` (seeds 10k
+entries + 1k skills with controlled term frequencies, asserts search
+p95 < 100ms; last run's worst p95 was 88.6ms).
+
+**Prisma 7 gotchas (each cost real time once):**
+- The driver adapter is mandatory: `src/lib/db.ts` uses
+  `@prisma/adapter-pg`; a bare PrismaClient throws at init.
+- `prisma.config.ts` replaces package.json config *and* .env autoload
+  (it imports dotenv itself). The CLI migrates over `DIRECT_URL`.
+- `migrate dev` does **not** regenerate the client — run
+  `npx prisma generate` (postinstall covers fresh installs).
+- Hand-written indexes must also be declared in `schema.prisma` (the
+  three GIN indexes carry `map:` names matching the SQL) or
+  `migrate dev` detects drift and silently hangs on an interactive
+  prompt when run through a pipe.
+- Nullable Json columns clear via `Prisma.DbNull`, not plain `null`.
+
+**Search architecture (the part no ORM shows).** `SearchDoc.tsv` is
+maintained entirely by Postgres triggers written by hand in the init
+migration (functions `kb_refresh_entry_doc`, `kb_refresh_skill_doc`,
+`kb_block_text`; six triggers over Entry/Section/Block/Skill/EntryTag/
+Tag). Weights: A = titles, B = summary + tags + chapter labels,
+C = section bodies, D = block text + transcripts. Drafts and
+soft-deleted entries have no docs at all; archived keeps docs, filtered
+by `status = 'published'` at query time. Queries (`src/lib/search.ts`)
+merge FTS with pg_trgm title similarity for typo tolerance and take the
+top N on rank *before* joining taxonomy or computing ts_headline —
+that ordering is what keeps p95 under 100ms. Snippets use «» as
+highlight delimiters; skill hits resolve a transcript timestamp so
+search can deep-link `?skill=&t=`. The soft-delete migration
+re-created both refresh functions; any future change to them must keep
+the `deletedAt` handling.
+
+**Files.** Uploads live in `uploads/` (gitignored), served by
+`/api/files/[id]` — auth-gated, with byte-range support (video
+scrubbing; Safari refuses media without it). Server actions accept up
+to 250mb bodies (`next.config.ts`) because screen recordings upload
+through one. `lib/storage.ts` is the S3 seam; `lib/transcribe.ts` is
+the transcription seam (returns null → manual paste field is the path).
+
+**Per-viewer state** stays in localStorage, never the server (§11: no
+analytics): `kb-watched` (skill Watched badges), `kb-sop:<blockId>`
+(SOP checklist ticks), theme. `lib/use-local-json.ts` is the
+hydration-safe hook (useSyncExternalStore; same-tab writes re-render
+via a custom event — the react-hooks lint forbids setState-in-effect
+patterns, see below).
+
+**React 19 / Next 16 lint rules that shaped the code:** the
+`react-hooks` rules `set-state-in-effect` and `refs` are enforced —
+server-data-into-state adoption happens at render time via the
+`prevKey` comparison pattern (see `use-drag-order.ts`, `InlineName`),
+and refs like the editor's `latest` mirror are only ever written inside
+event handlers. Next 16 notes: middleware is `proxy.ts`, page
+params/searchParams are Promises, `PageProps<"/route">`/`RouteContext`
+are global typed helpers, and the bundled docs at
+`node_modules/next/dist/docs/` are authoritative (per AGENTS.md).
+
+**Auth.** Entra ID, tenant-locked via the issuer, activates when the
+`AUTH_MICROSOFT_ENTRA_ID_*` env vars exist; until then a dev-only
+credentials provider signs in as dev@caizenhomes.com (development
+builds only — production has no sign-in path until Entra is
+registered). The jwt callback upserts the User row on sign-in;
+`session.user.id` is always a DB cuid (or resolved lazily).
+`trustHost: true` for self-hosted production.
+
+## Open items for step 11 (polish pass)
+
+- **Difficulty as noise**: nearly everything reads Beginner; decide
+  whether difficulty earns its place on subcategory rows (keep it in the
+  reader regardless). *(The other step-3/4 review notes — add-tile
+  prominence, badge placement, empty card footers — died with the card
+  grid in the browse restructure.)*
+- Unify the skills Watched store onto `lib/use-local-json.ts`.
+- FILE block type has schemas but no chip (Document covers uploads);
+  decide whether it earns one.
+- The skill form attaches existing SOPs only; creating an SOP inline
+  from the skill form was deferred.
+- Resolving "Suggest an edit" comments (or folding that into step 10).
+- Quality bar sweep from the spec: 360px layouts, full keyboard
+  reachability, reduced-motion.
 
 ## Design direction (reworked before step 6) — applies to every later step
 
@@ -10,13 +119,15 @@ chrome, Apple-adjacent. Structure was right; furniture was wrong.
 - **Typeface: Inter**, loaded via next/font (`--font-inter` → `--font-sans`).
   Never system-ui.
 - **Type scale with real contrast**, carried by tokens in globals.css (each
-  size utility bundles its weight and tracking):
-  - `text-page-title` — 34px / 500 / -0.025em. Every page opens on a hero
+  size utility bundles its weight and tracking). Current values — after
+  two post-step-9 raises from the original 14px baseline:
+  - `text-page-title` — 42px / 500 / -0.025em. Every page opens on a hero
     title with generous space; never straight into controls.
-  - `text-card-title` — 17px / 500 / -0.015em. The page title owns the
+  - `text-card-title` — 20px / 500 / -0.015em. The page title owns the
     scale; card titles never compete with the hero.
-  - `text-section-head` — 20px / 500 / -0.015em (subcategory headings).
-  - body 14px; `text-meta` — 12px for metadata, in `ink-faint`.
+  - `text-section-head` — 24px / 500 / -0.015em (subcategory headings).
+  - body and `text-sm` 16px; `text-meta` — 14px for metadata, in
+    `ink-faint`; `.section-label` 13px uppercase. Inputs are h-9 to fit.
 - **Borders are earned.** Only genuinely interactive containers keep them
   (inputs, secondary buttons, modals, bordered row lists). Entry cards and
   tiles are borderless content blocks — no background, no radius —
@@ -60,38 +171,6 @@ chrome, Apple-adjacent. Structure was right; furniture was wrong.
 This rework resolved three step-4 polish notes (Add-knowledge weight, badge
 placement, dashed add-tile prominence — now a plain text link) and the
 step-3 draft-badge note (tiles show meta and badge together).
-
-## For step 7 (block system)
-
-- **Workflow vs SOP chip hints (from step-2 review).** The two block types
-  overlap in contributors' heads — Month-end close carries both. The block
-  chip row in the editor must carry hint text distinguishing them:
-  - *Workflow* — the order of operations: what happens first, then next.
-  - *SOP* — the gate criteria: what must be true before proceeding.
-  Keep both available in every section; the hint is what prevents misuse.
-
-## For step 11 (polish pass) — from step-3 review
-
-- **Add-tile prominence.** The dashed "Add a feature here" tile competes with
-  real content in single-feature modules. When a module row has fewer than
-  three entries, shrink it — narrower tile or a plain text link.
-- **Draft badge replaces tile meta.** Draft entries show the badge *instead
-  of* the skill count line. Show both so tiles stay uniform.
-- **Does difficulty earn its place?** Nearly every tile reads Beginner, which
-  is noise. Watch it; consider dropping difficulty from tiles (keep it in the
-  reader) if the distribution stays this flat.
-
-## For step 11 (polish pass) — from step-4 review
-
-- **Add knowledge weight.** The solid accent button dominates the monochrome
-  landing. Make it outlined — accent text and border, transparent fill —
-  still the page's single primary action, less weight.
-- **Badge placement on cards.** Draft / Review overdue sit inside the pill
-  row and push a pill to a second line, making those cards taller. Move the
-  badge to the footer row or give it its own line.
-- **Empty card footers.** Cards with no skill/workflow/document counts leave
-  the footer half-empty; consider dropping the footer row when there are no
-  counts.
 
 ## Browse restructure (after step 6) — Google, not Yahoo
 
