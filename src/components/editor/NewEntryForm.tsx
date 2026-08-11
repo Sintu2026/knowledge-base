@@ -38,11 +38,17 @@ export function NewEntryForm({
       return;
     }
     startTransition(async () => {
-      const result = await createEntry({ template, subcategoryId, title });
-      if (result.ok && result.id) {
-        router.push(`/entry/${result.id}/edit`);
-      } else if (!result.ok) {
-        setError(result.error);
+      try {
+        const result = await createEntry({ template, subcategoryId, title });
+        if (result.ok && result.id) {
+          router.push(`/entry/${result.id}/edit`);
+        } else if (!result.ok) {
+          setError(result.error);
+        }
+      } catch {
+        setError(
+          "Couldn't reach the server. Check that it's running (and the database with it — `npm run db:check`), then try again.",
+        );
       }
     });
   };

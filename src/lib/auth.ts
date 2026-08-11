@@ -46,6 +46,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
   pages: { signIn: "/signin" },
   session: { strategy: "jwt" },
+  // Self-hosted deployments (npm start on a company box) aren't on a
+  // platform Auth.js recognises; without this every request fails with
+  // UntrustedHost in production. The tenant lock stays the real gate.
+  trustHost: true,
   callbacks: {
     signIn({ account, profile }) {
       if (account?.provider === "dev") return true;

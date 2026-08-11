@@ -221,7 +221,7 @@ export function SearchResults() {
                   </span>
                 ) : null}
                 {hit.timestamp !== null ? (
-                  <span className="inline-flex items-center gap-1 text-[13px] font-medium text-accent">
+                  <span className="inline-flex items-center gap-1 text-[14px] font-medium text-accent">
                     <CornerDownRight size={14} aria-hidden />
                     Jump to {formatDuration(hit.timestamp)}
                   </span>

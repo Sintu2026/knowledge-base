@@ -85,23 +85,28 @@
    * The type scale. Four sizes with real contrast — page titles land
    * heavy, metadata recedes, and tracking tightens as size grows.
    * Weight and tracking ride along with each size utility.
+   * Raised one notch across the board after review: reading an entry
+   * shouldn't take effort. Hierarchy unchanged, baseline up.
    */
-  --text-page-title: 2.125rem; /* 34px */
+  --text-sm: 0.9375rem; /* 15px — the body baseline, raised from 14 */
+  --text-sm--line-height: 1.55;
+
+  --text-page-title: 2.375rem; /* 38px */
   --text-page-title--line-height: 1.15;
   --text-page-title--letter-spacing: -0.025em;
   --text-page-title--font-weight: 500;
 
-  --text-card-title: 1.0625rem; /* 17px — the page title owns the scale */
+  --text-card-title: 1.125rem; /* 18px — the page title owns the scale */
   --text-card-title--line-height: 1.4;
   --text-card-title--letter-spacing: -0.015em;
   --text-card-title--font-weight: 500;
 
-  --text-section-head: 1.25rem; /* 20px */
+  --text-section-head: 1.375rem; /* 22px */
   --text-section-head--line-height: 1.3;
   --text-section-head--letter-spacing: -0.015em;
   --text-section-head--font-weight: 500;
 
-  --text-meta: 0.75rem; /* 12px */
+  --text-meta: 0.8125rem; /* 13px */
   --text-meta--line-height: 1.45;
 }
 
@@ -109,8 +114,8 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: 0.9375rem;
+  line-height: 1.55;
   font-weight: 400;
 }
 
@@ -127,7 +132,7 @@ b {
 
 /* Small uppercase section labels — the one exception to sentence case. */
 .section-label {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;

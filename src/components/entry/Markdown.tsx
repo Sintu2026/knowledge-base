@@ -23,7 +23,7 @@ function inline(text: string, keyBase: string): ReactNode[] {
       );
     } else if (part.startsWith("`") && part.endsWith("`")) {
       nodes.push(
-        <code key={key} className="rounded-control bg-sunken px-1 py-0.5 text-[13px]">
+        <code key={key} className="rounded-control bg-sunken px-1 py-0.5 text-[14px]">
           {part.slice(1, -1)}
         </code>,
       );

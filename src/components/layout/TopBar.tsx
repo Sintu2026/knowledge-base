@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Library } from "lucide-react";
 import { signOut, type CurrentUser } from "@/lib/auth";
+import { LinkButton } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NavLinks } from "@/components/layout/NavLinks";
@@ -20,12 +21,9 @@ export function TopBar({ user }: TopBarProps) {
         <div className="flex items-center gap-2">
           <NavLinks />
           {/* Contribution lives in the chrome now that the landing is bare. */}
-          <Link
-            href="/new"
-            className="rounded-control px-2.5 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent-tint"
-          >
+          <LinkButton href="/new" variant="primary" size="sm" className="ml-1">
             Add knowledge
-          </Link>
+          </LinkButton>
           <ThemeToggle />
           {user ? (
             <form

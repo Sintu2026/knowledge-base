@@ -11,7 +11,15 @@ import { cn } from "@/lib/cn";
  * the metadata line under the title carries it on small screens).
  */
 
-export type RailSection = { kind: string; label: string; filled: boolean };
+export type RailSection = {
+  kind: string;
+  label: string;
+  filled: boolean;
+  // Whether the section actually renders on the page — empty sections stay
+  // out of the content column, so their rail entries must not be dead
+  // anchors pointing at nothing.
+  rendered: boolean;
+};
 
 export function EntryRail({
   sections,
@@ -78,23 +86,34 @@ export function EntryRail({
         "min-[900px]:top-10 min-[900px]:z-auto min-[900px]:m-0 min-[900px]:w-[120px] min-[900px]:flex-col min-[900px]:gap-0.5 min-[900px]:self-start min-[900px]:overflow-visible min-[900px]:border-b-0 min-[900px]:bg-transparent min-[900px]:p-0",
       )}
     >
-      {sections.map((section) => (
-        <a
-          key={section.kind}
-          href={`#section-${section.kind.toLowerCase()}`}
-          aria-current={active === section.kind ? "true" : undefined}
-          className={cn(
-            "rounded-control py-1 pr-2 text-sm whitespace-nowrap transition-colors",
-            active === section.kind
-              ? "font-medium text-accent"
-              : section.filled
-                ? "text-ink-muted hover:text-ink"
-                : "text-ink-faint hover:text-ink-muted",
-          )}
-        >
-          {section.label}
-        </a>
-      ))}
+      {sections.map((section) =>
+        section.rendered ? (
+          <a
+            key={section.kind}
+            href={`#section-${section.kind.toLowerCase()}`}
+            aria-current={active === section.kind ? "true" : undefined}
+            className={cn(
+              "rounded-control py-1 pr-2 text-sm whitespace-nowrap transition-colors",
+              active === section.kind
+                ? "font-medium text-accent"
+                : section.filled
+                  ? "text-ink-muted hover:text-ink"
+                  : "text-ink-faint hover:text-ink-muted",
+            )}
+          >
+            {section.label}
+          </a>
+        ) : (
+          // Empty sections are the what's-missing signal, not navigation.
+          <span
+            key={section.kind}
+            title="Empty — nothing to jump to yet"
+            className="py-1 pr-2 text-sm whitespace-nowrap text-ink-faint/70"
+          >
+            {section.label}
+          </span>
+        ),
+      )}
       {reviewedLabel ? (
         <p
           className={cn(

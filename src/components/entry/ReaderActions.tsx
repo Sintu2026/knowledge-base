@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button, LinkButton } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { markReviewed } from "@/lib/actions/entries";
 import { addComment } from "@/lib/actions/comments";
@@ -15,8 +14,6 @@ import { addComment } from "@/lib/actions/comments";
  * below.
  */
 
-const actionClass =
-  "rounded-control text-sm text-ink-muted transition-colors hover:text-accent";
 
 export function ReaderActions({
   entryId,
@@ -69,36 +66,24 @@ export function ReaderActions({
 
   return (
     <div className="border-t border-hairline pt-5">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-        {isFeature ? (
-          <Link href={`/entry/${entryId}/edit`} className={actionClass}>
-            Add a skill recording
-          </Link>
-        ) : null}
-        <Link
-          href={`/entry/${entryId}/edit`}
-          className="rounded-control text-sm text-accent transition-colors hover:text-accent-hover"
-        >
+      <div className="flex flex-wrap items-center gap-2.5">
+        <LinkButton href={`/entry/${entryId}/edit`} variant="primary">
           Edit
-        </Link>
-        <button
-          type="button"
-          onClick={() => setSuggesting((prev) => !prev)}
-          className={actionClass}
-        >
+        </LinkButton>
+        {isFeature ? (
+          <LinkButton href={`/entry/${entryId}/edit`}>
+            Add a skill recording
+          </LinkButton>
+        ) : null}
+        <Button onClick={() => setSuggesting((prev) => !prev)}>
           Suggest an edit
-        </button>
-        <button
-          type="button"
-          disabled={busy === "review"}
-          onClick={review}
-          className={`${actionClass} disabled:opacity-60`}
-        >
+        </Button>
+        <Button disabled={busy === "review"} onClick={review}>
           {busy === "review" ? "Marking…" : "Mark reviewed"}
-        </button>
-        <button type="button" onClick={copy} className={actionClass} aria-live="polite">
+        </Button>
+        <Button onClick={copy} aria-live="polite">
           {copied ? "Copied" : "Copy link"}
-        </button>
+        </Button>
       </div>
 
       {suggesting ? (

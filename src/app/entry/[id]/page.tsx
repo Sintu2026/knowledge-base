@@ -65,10 +65,24 @@ export default async function EntryPage(props: PageProps<"/entry/[id]">) {
   const reviewedLabel = entry.reviewedAt ? relativeTime(entry.reviewedAt) : null;
   const isFeature = entry.template === "FEATURE";
 
+  // A section renders when it has anything to show; the rail must know,
+  // because an anchor to an unrendered section is a dead link.
+  const renders = (kind: (typeof KINDS)[number]) => {
+    const section = entry.sections.find((s) => s.kind === kind);
+    if (!section) return false;
+    return (
+      section.body.trim() !== "" ||
+      section.blocks.length > 0 ||
+      (kind === "HOW" && entry.skills.length > 0) ||
+      (kind === "WHO" && entry.assignments.length > 0)
+    );
+  };
+
   const railSections = KINDS.map((kind, i) => ({
     kind,
     label: sectionLabel(entry.template, kind),
     filled: filled[i],
+    rendered: renders(kind),
   }));
 
   const readerSkills = entry.skills.map((sk) => ({
@@ -163,19 +177,14 @@ export default async function EntryPage(props: PageProps<"/entry/[id]">) {
           ) : (
             <div className="mt-12 flex flex-col gap-12">
               {entry.sections.map((section) => {
+                if (!renders(section.kind)) {
+                  return null; // empty sections stay in the rail, not the page
+                }
                 const showSkills =
                   section.kind === "HOW" && entry.skills.length > 0;
                 const hasBody = section.body.trim() !== "";
                 const assignments =
                   section.kind === "WHO" ? entry.assignments : [];
-                if (
-                  !hasBody &&
-                  section.blocks.length === 0 &&
-                  !showSkills &&
-                  assignments.length === 0
-                ) {
-                  return null; // empty sections stay in the rail, not the page
-                }
                 return (
                   <section
                     key={section.id}

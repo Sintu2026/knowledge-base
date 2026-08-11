@@ -30,8 +30,16 @@ chrome, Apple-adjacent. Structure was right; furniture was wrong.
   `ink-faint`, Review overdue in `warning`). A badge annotates; it never
   competes with content.
 - **Filter chips are text links** — active is full-weight ink, no pill.
-- **Primary and danger actions are coloured text** — no fill, no border.
-  Weight comes from colour and placement, not saturation.
+- **Buttons are real controls** *(amended after the step-9 review — the
+  text-only direction went too far)*: primary and danger are filled
+  (`bg-accent`/`bg-danger` with their contrast tokens), secondary is
+  bordered on `hairline-strong`, all at h-9/h-8 with real padding.
+  Actions look like actions; the page around them stays calm, and colour
+  still only lands on controls. Quiet text actions remain for tertiary
+  things (assist, block chips, tags).
+- **Type scale raised one notch** *(same review)*: body/text-sm 15px,
+  meta 13px, card-title 18px, section-head 22px, page-title 38px,
+  section-label 12px. Hierarchy unchanged; baseline up.
 - **Motion**: under 200ms, eased, opacity and transform only. Cards lift
   -2px on hover (`duration-150 ease-out`); titles shift to accent.
 - **Whitespace**: page shell `py-10/14`, heroes with `mt-8`+, section rows

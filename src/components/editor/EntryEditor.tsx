@@ -65,7 +65,7 @@ type EntryEditorProps = {
   assistAvailable: boolean;
 };
 
-type SaveState = "idle" | "dirty" | "saving" | "saved";
+type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
 
 const AUTOSAVE_MS = 800;
 
@@ -94,7 +94,9 @@ export function EntryEditor({
   );
   const [status, setStatus] = useState(entry.status);
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [publishError, setPublishError] = useState<string | null>(null);
+  // One visible line for anything that goes wrong — a rejected action, a
+  // validation failure, or the server being unreachable. Never silent.
+  const [errorText, setErrorText] = useState<string | null>(null);
 
   // What the server last acknowledged, to diff against on flush; `latest`
   // mirrors state for the debounced flush closure and is only ever written
@@ -103,10 +105,12 @@ export function EntryEditor({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef({ title: entry.title, summary: entry.summary, bodies: Object.fromEntries(entry.sections.map((s) => [s.id, s.body])) });
 
-  const flush = useCallback(() => {
+  // Returns whether everything is persisted; failures are shown, never
+  // swallowed — a save that did nothing must say so.
+  const flush = useCallback(async (): Promise<boolean> => {
     if (timer.current) clearTimeout(timer.current);
     const current = latest.current;
-    const jobs: Promise<unknown>[] = [];
+    const jobs: Promise<{ ok: boolean; error?: string }>[] = [];
     if (
       current.title !== saved.current.title ||
       current.summary !== saved.current.summary
@@ -120,18 +124,36 @@ export function EntryEditor({
         jobs.push(updateSectionBody({ id, body }));
       }
     }
-    if (jobs.length === 0) return Promise.resolve();
+    if (jobs.length === 0) {
+      // Clicking Save with nothing changed still deserves an answer.
+      setSaveState("saved");
+      return true;
+    }
     setSaveState("saving");
-    return Promise.all(jobs).then(() => {
+    try {
+      const results = await Promise.all(jobs);
+      const failed = results.find((result) => !result.ok);
+      if (failed) {
+        setSaveState("error");
+        setErrorText(failed.error ?? "Saving failed — try again.");
+        return false;
+      }
       saved.current = { title: current.title, summary: current.summary, bodies: { ...current.bodies } };
       setSaveState("saved");
-    });
+      return true;
+    } catch {
+      setSaveState("error");
+      setErrorText(
+        "Couldn't reach the server to save. Your text is still here — check the connection (or the server terminal) and try again.",
+      );
+      return false;
+    }
   }, [entry.id]);
 
   // Autosave 800ms after typing stops — a quiet label, never a toast.
   const scheduleSave = useCallback(() => {
     setSaveState("dirty");
-    setPublishError(null);
+    setErrorText(null);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       startTransition(async () => {
@@ -142,14 +164,20 @@ export function EntryEditor({
 
   const publish = useCallback(() => {
     startTransition(async () => {
-      await flush();
-      const result = await publishEntry({ id: entry.id });
-      if (result.ok) {
-        setStatus("published");
-        setPublishError(null);
-        router.refresh();
-      } else {
-        setPublishError(result.error);
+      try {
+        if (!(await flush())) return; // the save error is already visible
+        const result = await publishEntry({ id: entry.id });
+        if (result.ok) {
+          setStatus("published");
+          setErrorText(null);
+          router.refresh();
+        } else {
+          setErrorText(result.error);
+        }
+      } catch {
+        setErrorText(
+          "Couldn't reach the server to publish. Nothing was lost — try again.",
+        );
       }
     });
   }, [entry.id, flush, router]);
@@ -212,7 +240,9 @@ export function EntryEditor({
           : "Saved"
         : saveState === "dirty"
           ? "Unsaved changes"
-          : "";
+          : saveState === "error"
+            ? "Couldn't save"
+            : "";
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-6 py-8 sm:px-8">
@@ -225,11 +255,16 @@ export function EntryEditor({
           <ArrowLeft size={16} aria-hidden />
           Back
         </Link>
-        <span className="ml-auto text-meta text-ink-faint" role="status">
+        <span
+          className={cn(
+            "ml-auto text-meta",
+            saveState === "error" ? "text-danger" : "text-ink-faint",
+          )}
+          role="status"
+        >
           {saveLabel}
         </span>
         <Button
-          size="sm"
           onClick={() =>
             startTransition(async () => {
               await flush();
@@ -239,15 +274,15 @@ export function EntryEditor({
           Save draft
         </Button>
         {status === "draft" ? (
-          <Button size="sm" variant="primary" onClick={publish}>
+          <Button variant="primary" onClick={publish}>
             Publish
           </Button>
         ) : (
           <Badge variant="accent">Published</Badge>
         )}
       </div>
-      {publishError ? (
-        <p className="mt-3 text-right text-sm text-danger">{publishError}</p>
+      {errorText ? (
+        <p className="mt-3 text-right text-sm text-danger">{errorText}</p>
       ) : null}
 
       {/* Title and the chip row beneath it. */}
@@ -262,7 +297,7 @@ export function EntryEditor({
           }}
           placeholder="Untitled"
           aria-label="Entry title"
-          className="w-full text-[20px] font-medium tracking-[-0.02em]"
+          className="w-full text-[22px] font-medium tracking-[-0.02em]"
         />
         <Input
           variant="bare"
