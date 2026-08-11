@@ -3,12 +3,14 @@
 import { getCurrentUser } from "@/lib/auth";
 import { canDeleteEntry, canEdit } from "@/lib/access";
 import { db } from "@/lib/db";
+import { recordRevision } from "@/lib/revisions";
 import {
   assignmentRemoveSchema,
   assignmentSetSchema,
   entryCreateSchema,
   entryIdSchema,
   entryMetaSchema,
+  ownerSetSchema,
   reviewIntervalSchema,
   sectionBodySchema,
   tagAddSchema,
@@ -86,6 +88,8 @@ export async function updateEntryMeta(input: unknown): Promise<EntryActionResult
     where: { id },
     data: { title, summary, subcategoryId, categoryId },
   });
+  // §2: every change writes a Revision. Bursts by one author coalesce.
+  await recordRevision(id, user.id);
   return { ok: true };
 }
 
@@ -94,10 +98,11 @@ export async function updateSectionBody(input: unknown): Promise<EntryActionResu
   if (!user) return fail("Sign in to make changes.");
   const parsed = sectionBodySchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0].message);
-  await db.section.update({
+  const section = await db.section.update({
     where: { id: parsed.data.id },
     data: { body: parsed.data.body },
   });
+  await recordRevision(section.entryId, user.id);
   return { ok: true };
 }
 
@@ -121,26 +126,12 @@ export async function publishEntry(input: unknown): Promise<EntryActionResult> {
     return fail("Write the What section before publishing — one paragraph is enough.");
   }
 
-  // Full revision history arrives in step 10; publishing already records
-  // an attributable snapshot so open editing stays reversible (§2).
-  await db.$transaction([
-    db.entry.update({
-      where: { id: entry.id },
-      data: { status: "published", version: { increment: 1 } },
-    }),
-    db.revision.create({
-      data: {
-        entryId: entry.id,
-        authorId: user.id,
-        snapshot: {
-          title: entry.title,
-          summary: entry.summary,
-          status: "published",
-          sections: entry.sections.map((s) => ({ kind: s.kind, body: s.body })),
-        },
-      },
-    }),
-  ]);
+  await db.entry.update({
+    where: { id: entry.id },
+    data: { status: "published", version: { increment: 1 } },
+  });
+  // Publishing is a checkpoint: its revision never coalesces with edits.
+  await recordRevision(entry.id, user.id, "publish");
   return { ok: true };
 }
 
@@ -176,6 +167,52 @@ export async function deleteEntry(input: unknown): Promise<EntryActionResult> {
   await db.entry.update({
     where: { id: entry.id },
     data: { deletedAt: new Date() },
+  });
+  await recordRevision(entry.id, user.id, "delete");
+  return { ok: true };
+}
+
+// Restore a soft-deleted entry — same permission set as deleting it. The
+// search trigger rebuilds its docs the moment deletedAt clears.
+export async function restoreEntry(input: unknown): Promise<EntryActionResult> {
+  const user = await editor();
+  if (!user) return fail("Sign in to make changes.");
+  const parsed = entryIdSchema.safeParse(input);
+  if (!parsed.success) return fail("Refresh and try again.");
+
+  const entry = await db.entry.findUnique({ where: { id: parsed.data.id } });
+  if (!entry) return fail("This entry no longer exists.");
+  if (!entry.deletedAt) return { ok: true }; // already live
+  if (!canDeleteEntry(user, entry)) {
+    return fail("Only the owner or an admin can restore this entry.");
+  }
+
+  await db.entry.update({
+    where: { id: entry.id },
+    data: { deletedAt: null },
+  });
+  await recordRevision(entry.id, user.id, "restore");
+  return { ok: true };
+}
+
+// §2: the owner is a name on the page, not a lock — anyone signed in can
+// hand it over. The owner is who to ask and who gets the review reminder.
+export async function setOwner(input: unknown): Promise<EntryActionResult> {
+  const user = await editor();
+  if (!user) return fail("Sign in to make changes.");
+  const parsed = ownerSetSchema.safeParse(input);
+  if (!parsed.success) return fail("Refresh and try again.");
+
+  const [entry, owner] = await Promise.all([
+    db.entry.findUnique({ where: { id: parsed.data.entryId } }),
+    db.user.findUnique({ where: { id: parsed.data.userId } }),
+  ]);
+  if (!entry || entry.deletedAt) return fail("This entry no longer exists.");
+  if (!owner) return fail("That person no longer exists.");
+
+  await db.entry.update({
+    where: { id: entry.id },
+    data: { ownerId: owner.id },
   });
   return { ok: true };
 }

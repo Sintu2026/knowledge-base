@@ -53,6 +53,7 @@ export default async function EntryEditPage(props: PageProps<"/entry/[id]/edit">
     status: entry.status,
     subcategoryId: entry.subcategoryId,
     reviewIntervalDays: entry.reviewIntervalDays,
+    ownerId: entry.ownerId,
     owner: { name: entry.owner.name },
     tags: entry.tags.map((t) => ({ id: t.tag.id, label: t.tag.label })),
     assignments: entry.assignments.map((a) => ({

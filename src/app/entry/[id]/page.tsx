@@ -13,6 +13,7 @@ import { Markdown } from "@/components/entry/Markdown";
 import { BlockView, type ReaderBlock } from "@/components/entry/BlockView";
 import { SkillsList } from "@/components/entry/SkillsList";
 import { ReaderActions } from "@/components/entry/ReaderActions";
+import { ResolveCommentButton } from "@/components/entry/ResolveCommentButton";
 
 const KINDS = ["WHAT", "WHY", "HOW", "WHO", "WHEN"] as const;
 
@@ -244,9 +245,12 @@ export default async function EntryPage(props: PageProps<"/entry/[id]">) {
                 {entry.comments.map((comment) => (
                   <li key={comment.id} className="flex gap-2.5">
                     <Avatar name={comment.author.name} size="sm" />
-                    <div className="min-w-0">
-                      <p className="text-meta text-ink-faint">
-                        {comment.author.name} · {relativeTime(comment.createdAt)}
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-baseline justify-between gap-3 text-meta text-ink-faint">
+                        <span>
+                          {comment.author.name} · {relativeTime(comment.createdAt)}
+                        </span>
+                        <ResolveCommentButton commentId={comment.id} />
                       </p>
                       <p className="mt-0.5 text-sm text-ink-muted">{comment.body}</p>
                     </div>

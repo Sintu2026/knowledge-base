@@ -26,11 +26,11 @@ Build order (§9 below), all pushed to `main`:
 - [x] 7. Block system (union, row primitive, block editors)
 - [x] 8. Skills: editor, player with chapters, deep links, transcript search
 - [x] 9. Read view with rail and all renderers
-- [ ] **10. Revisions, history, diffs, review cadence — NEXT.** Also picks
-  up the deferred items: ownership transfer, restore-from-delete UI, and
-  resolving "Suggest an edit" comments.
-- [ ] 11. Accessibility and polish pass — accumulated notes live in
-  `docs/build-notes.md` under "Open items for step 11".
+- [x] 10. Revisions, history, diffs, review cadence — including the
+  deferred items: ownership transfer, restore-from-delete UI, resolving
+  "Suggest an edit" comments, and the notifications no-op seam.
+- [ ] **11. Accessibility and polish pass — NEXT.** Accumulated notes live
+  in `docs/build-notes.md` under "Open items for step 11".
 
 Built beyond the numbered steps, by review request:
 

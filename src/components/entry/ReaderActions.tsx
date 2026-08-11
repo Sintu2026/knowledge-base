@@ -84,6 +84,7 @@ export function ReaderActions({
         <Button onClick={copy} aria-live="polite">
           {copied ? "Copied" : "Copy link"}
         </Button>
+        <LinkButton href={`/entry/${entryId}/history`}>History</LinkButton>
       </div>
 
       {suggesting ? (

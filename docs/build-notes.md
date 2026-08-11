@@ -95,6 +95,43 @@ registered). The jwt callback upserts the User row on sign-in;
 `session.user.id` is always a DB cuid (or resolved lazily).
 `trustHost: true` for self-hosted production.
 
+## Decisions made in step 10 (revisions and history)
+
+- **Edits coalesce; checkpoints don't.** Autosave fires every 800ms, so
+  raw per-write revisions would be noise: consecutive edits by the same
+  author within 30 minutes update one revision whose snapshot is the
+  state at the end of the burst — history reads as "what each session
+  changed". Publish, revert, delete and restore are marked events
+  (`snapshot.event`) that always stand alone; seeded revisions (no event
+  field) are treated as checkpoints and never coalesced into.
+- **Revisions cover the prose layer** — title, summary, tags, section
+  bodies, status. Blocks and skills stay out deliberately: their payloads
+  carry fileIds whose files are removed with the block, so restoring them
+  would resurrect broken references. Their changes are attributed by the
+  edit revisions around them, not diffed.
+- **Restore writes forward.** Restoring a version writes the snapshot's
+  prose back and records the restore as a new `revert` revision — history
+  only grows, so a restore can itself be undone. Status and tags are not
+  restored (workflow state and shared labels aren't prose).
+- **The diff is hand-rolled word-level LCS** (`lib/diff.ts`, no
+  dependency): tokens are words with trailing whitespace, additions in
+  accent-tint `<ins>`, deletions struck in danger-tint `<del>`; oversized
+  inputs fall back to whole-text replace.
+- **Deletes and restores are now attributed** — soft delete records a
+  `delete` revision, restore a `restore` one, so the history answers "who
+  deleted this and when".
+- **Restore-from-delete lives on Your entries** (`/?owner=me`): your own
+  deleted entries, all of them for `ADMIN_EMAILS` admins, one Restore
+  action each. The search trigger reindexes on the spot.
+- **Ownership transfer is a quiet select in the editor's chip row** —
+  open to anyone signed in (§2: the owner is a name, not a lock). No
+  revision is written (owner isn't in the prose snapshot).
+- **Review cadence needed no new mechanics** in step 10: cadence select
+  (editor), reviewedAt stamping, Mark reviewed, overdue badges/rail state
+  all exist; what remains is a reminder channel, which is §11-out-of-scope
+  — `lib/notifications.ts` is the no-op seam, called on suggestion-added,
+  with a note about the cron a review-due reminder would need.
+
 ## Open items for step 11 (polish pass)
 
 - **Difficulty as noise**: nearly everything reads Beginner; decide
@@ -107,7 +144,6 @@ registered). The jwt callback upserts the User row on sign-in;
   decide whether it earns one.
 - The skill form attaches existing SOPs only; creating an SOP inline
   from the skill form was deferred.
-- Resolving "Suggest an edit" comments (or folding that into step 10).
 - Quality bar sweep from the spec: 360px layouts, full keyboard
   reachability, reduced-motion.
 

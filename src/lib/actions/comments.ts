@@ -3,12 +3,13 @@
 import { getCurrentUser } from "@/lib/auth";
 import { canEdit } from "@/lib/access";
 import { db } from "@/lib/db";
-import { commentAddSchema } from "@/lib/schemas/entry";
+import { notifySuggestionAdded } from "@/lib/notifications";
+import { commentAddSchema, commentResolveSchema } from "@/lib/schemas/entry";
 import type { EntryActionResult } from "@/lib/actions/entries";
 
 /*
  * "Suggest an edit" on the read view (§8.4): a Comment the owner sees on
- * the page. Resolving them arrives with step 10's history work.
+ * the page, resolvable in place once handled.
  */
 
 export async function addComment(input: unknown): Promise<EntryActionResult> {
@@ -17,7 +18,10 @@ export async function addComment(input: unknown): Promise<EntryActionResult> {
   const parsed = commentAddSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
 
-  const entry = await db.entry.findUnique({ where: { id: parsed.data.entryId } });
+  const entry = await db.entry.findUnique({
+    where: { id: parsed.data.entryId },
+    include: { owner: true },
+  });
   if (!entry || entry.deletedAt) {
     return { ok: false, error: "This entry no longer exists." };
   }
@@ -28,6 +32,28 @@ export async function addComment(input: unknown): Promise<EntryActionResult> {
       authorId: user.id,
       body: parsed.data.body,
     },
+  });
+  await notifySuggestionAdded({
+    entryId: entry.id,
+    entryTitle: entry.title,
+    ownerEmail: entry.owner.email,
+    authorName: user.name,
+  });
+  return { ok: true };
+}
+
+// Open access: anyone signed in can mark a suggestion handled — the row
+// stays in the database, it just leaves the page.
+export async function resolveComment(input: unknown): Promise<EntryActionResult> {
+  const user = await getCurrentUser();
+  if (!canEdit(user)) return { ok: false, error: "Sign in to make changes." };
+  const parsed = commentResolveSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Refresh and try again." };
+  const comment = await db.comment.findUnique({ where: { id: parsed.data.id } });
+  if (!comment) return { ok: true }; // already gone
+  await db.comment.update({
+    where: { id: comment.id },
+    data: { resolved: true },
   });
   return { ok: true };
 }

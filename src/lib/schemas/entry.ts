@@ -45,6 +45,18 @@ export const assignmentSetSchema = z.object({
 
 export const assignmentRemoveSchema = z.object({ id: z.string().min(1) });
 
+export const ownerSetSchema = z.object({
+  entryId: z.string().min(1),
+  userId: z.string().min(1),
+});
+
+export const revisionRestoreSchema = z.object({
+  entryId: z.string().min(1),
+  revisionId: z.string().min(1),
+});
+
+export const commentResolveSchema = z.object({ id: z.string().min(1) });
+
 export const commentAddSchema = z.object({
   entryId: z.string().min(1),
   body: z.string().trim().min(1, "Write the suggestion first.").max(2000),

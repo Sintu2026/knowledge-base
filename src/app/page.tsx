@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
+import { isAdmin } from "@/lib/access";
 import { db } from "@/lib/db";
-import { isReviewOverdue, plural } from "@/lib/format";
+import { isReviewOverdue, plural, relativeTime } from "@/lib/format";
+import { RestoreEntryButton } from "@/components/entry/RestoreEntryButton";
 import { TopBar } from "@/components/layout/TopBar";
 import { LinkButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -52,6 +54,23 @@ export default async function HomePage(props: PageProps<"/">) {
       })
     : [];
 
+  // Restore-from-delete lives here: your own deleted entries — all of
+  // them for admins — with one quiet action back.
+  const deletedEntries = mine
+    ? await db.entry.findMany({
+        where: {
+          deletedAt: { not: null },
+          ...(isAdmin(user) ? {} : { ownerId: user?.id ?? "" }),
+        },
+        orderBy: { deletedAt: "desc" },
+        take: 25,
+        include: {
+          category: { select: { name: true } },
+          subcategory: { select: { name: true } },
+        },
+      })
+    : [];
+
   const searching = q !== "";
 
   return (
@@ -98,6 +117,30 @@ export default async function HomePage(props: PageProps<"/">) {
                     ))}
                   </RowList>
                 )}
+                {deletedEntries.length > 0 ? (
+                  <div className="mt-12">
+                    <h2 className="section-label">Deleted</h2>
+                    <ul className="mt-3 flex flex-col gap-3">
+                      {deletedEntries.map((entry) => (
+                        <li
+                          key={entry.id}
+                          className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
+                        >
+                          <span className="flex min-w-0 flex-col">
+                            <span className="truncate text-ink-muted">
+                              {entry.title || "Untitled"}
+                            </span>
+                            <span className="truncate text-meta text-ink-faint">
+                              {entry.category.name} › {entry.subcategory.name} ·
+                              deleted {entry.deletedAt ? relativeTime(entry.deletedAt) : ""}
+                            </span>
+                          </span>
+                          <RestoreEntryButton entryId={entry.id} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
             )}
           </>

@@ -29,6 +29,7 @@ import {
   removeAssignment,
   removeTag,
   setAssignment,
+  setOwner,
   setReviewInterval,
   updateEntryMeta,
   updateSectionBody,
@@ -53,6 +54,7 @@ export type EditorEntry = {
   status: "draft" | "published" | "archived";
   subcategoryId: string;
   reviewIntervalDays: number | null;
+  ownerId: string;
   owner: { name: string };
   tags: { id: string; label: string }[];
   assignments: { id: string; role: string; userId: string; userName: string }[];
@@ -331,10 +333,12 @@ export function EntryEditor({
             className="w-72"
           />
           <Badge>{entry.template === "FEATURE" ? "Feature" : "Process"}</Badge>
-          <span className="inline-flex items-center gap-1.5 text-meta text-ink-faint">
-            <Avatar name={entry.owner.name} size="sm" />
-            {entry.owner.name}
-          </span>
+          <OwnerSelect
+            entryId={entry.id}
+            ownerId={entry.ownerId}
+            ownerName={entry.owner.name}
+            users={users}
+          />
           <TagRow entryId={entry.id} tags={entry.tags} />
         </div>
         {assistAvailable ? (
@@ -499,6 +503,49 @@ function SectionEditor({
       )}
       {extra ? <div className="mt-4">{extra}</div> : null}
     </section>
+  );
+}
+
+/*
+ * Ownership transfer (§2: the owner is a name on the page, not a lock —
+ * who to ask, and who gets the review reminder). A quiet avatar+select
+ * in the chip row; anyone signed in can hand it over.
+ */
+function OwnerSelect({
+  entryId,
+  ownerId,
+  ownerName,
+  users,
+}: {
+  entryId: string;
+  ownerId: string;
+  ownerName: string;
+  users: { id: string; name: string }[];
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Avatar name={ownerName} size="sm" />
+      <Select
+        value={ownerId}
+        disabled={pending}
+        aria-label="Entry owner"
+        onChange={(e) =>
+          startTransition(async () => {
+            await setOwner({ entryId, userId: e.target.value });
+            router.refresh();
+          })
+        }
+        className="h-8 w-44 text-meta"
+      >
+        {users.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name}
+          </option>
+        ))}
+      </Select>
+    </span>
   );
 }
 
